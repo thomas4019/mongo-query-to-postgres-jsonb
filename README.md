@@ -1,7 +1,7 @@
 # Mongo-Postgres Query Converter
 [Mongo's Query Documents](https://docs.mongodb.org/manual/tutorial/query-documents/) are useful, but only work with Mongo. This module converts a Mongo query to a PostgreSQL WHERE clause on data stored in a json/jsonb field.
 
-## Example"
+### Example 1
 ```javascript
 { 'address.city': 'provo',
   name: 'Thomas',
@@ -12,6 +12,7 @@ becomes
 (data->'address'->>'city'='provo') and (data->>'name'='Thomas') and (data->>'age'>='30')
 ```
 
+### Example 2
 ```javascript
 {
      $or: [ { qty: { $gt: 100 } }, { price: { $lt: 9.95 } } ]
