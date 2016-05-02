@@ -1,0 +1,26 @@
+{
+  "name": "mongo-query-to-postgres-jsonb",
+  "version": "0.1.0",
+  "description": "Converts MongoDB queries to postgresql queries for jsonb fields.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/thomas4019/mongo-query-to-postgres-jsonb.git"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "mongogdb",
+    "postgresql",
+    "jsonb",
+    "json"
+  ],
+  "author": "Thomas Hansen <th4019@example.com> (http://thomashansen.me)",
+  "license": "MIT"
+}
