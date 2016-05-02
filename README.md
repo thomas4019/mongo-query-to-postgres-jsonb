@@ -1,5 +1,5 @@
 # Mongo-Postgres Query Converter
-[Mongo's Query Documents](https://docs.mongodb.org/manual/tutorial/query-documents/) are useful, but only work with Mongo. This module converts a Mongo query to a PostgreSQL WHERE clause on data stored in a json/jsonb field.
+[MongoDB query documents](https://docs.mongodb.org/manual/tutorial/query-documents/) are useful, but only work with Mongo. This converts a Mongo query to a PostgreSQL WHERE clause on data stored in a json/jsonb field.
 
 ### Example 1
 ```javascript
@@ -33,6 +33,8 @@ npm install mongo-query-to-postgres-jsonb
 var mongoToPostgres = require('mongo-query-to-postgres-jsonb');
 mongoToPostgres('data', query)
 ```
+
+The first parameter is the name of your jsonb column in your postgres table. The second parameter is the Mongo style query.
 
 ## Supported Features
 * $eq, $gt, $gte, $lt, $lte, $ne
