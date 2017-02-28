@@ -103,6 +103,15 @@ describe('comparision operators', function() {
 	});
 });
 
+describe('regular expressions', function() {
+	it('basic', function () {
+		assert.equal("data->>'type' ~ 'food'", convert('data', { type: { $regex : 'food' } }));
+	});
+	it('case insensitive', function () {
+		assert.equal("data->>'type' ~* 'food'", convert('data', { type: { $regex : 'food', $options: 'i' } }));
+	});
+});
+
 describe('combined tests', function () {
 	it('should handle ANDs and ORs together', function() {
 		assert.equal('(data->>\'type\'=\'food\' and (data->\'qty\'>\'100\'::jsonb OR data->\'price\'<\'9.95\'::jsonb))', convert('data', {

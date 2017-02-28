@@ -20,6 +20,7 @@ var pathToText = function(path, isString) {
 	return text;
 }
 
+// These are the simple operators.
 var ops = {
 	$eq: '=',
 	$gt: '>',
@@ -30,7 +31,7 @@ var ops = {
 }
 
 var otherOps = {
-	$in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true
+	$in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true, $regex: true
 }
 
 var convert = function (path, query) {
@@ -54,6 +55,12 @@ var convert = function (path, query) {
 						return '('+query[key].map(function(subquery) {return convert(path, subquery) })
 							.join(key == '$or' ? ' OR ' : ' AND ')+')';
 					}
+				} else if (key == '$regex') {
+					var op = '~';
+					if (query['$options'] && query['$options'].includes('i')) {
+						op += '*';
+					}
+					return pathToText(path, true) + ' ' + op + ' \'' + stringEscape(value) + '\'';
 				} else if (key == '$elemMatch') {
 					return pathToText(path, false) + ' @> \'' + stringEscape(JSON.stringify(query[key])) + '\'::jsonb';
 				} else if (key == '$in' || key == '$nin') {

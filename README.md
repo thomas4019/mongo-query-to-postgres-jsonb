@@ -41,6 +41,8 @@ The first parameter is the name of your jsonb column in your postgres table. The
 * $or, $not
 * [$in](https://docs.mongodb.org/manual/reference/operator/query/in/#use-the-in-operator-to-match-values-in-an-array), $nin
 * $elemMatch
+* [$regex](https://docs.mongodb.com/manual/reference/operator/query/regex/)
+
 
 ## Todo
 * $nor
