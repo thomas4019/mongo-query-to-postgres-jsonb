@@ -19,6 +19,9 @@ var pathToText = function(path, isString) {
 	}
 	return text;
 }
+var convertDotNotation = function(path, pathDotNotation) {
+	return pathToText([path].concat(pathDotNotation.split('.')), true);
+}
 
 // These are the simple operators.
 var ops = {
@@ -93,3 +96,4 @@ var convert = function (path, query) {
 module.exports = function (fieldName, query) {
 	return convert([fieldName], query);
 };
+module.exports.convertDotNotation = convertDotNotation
