@@ -1,24 +1,26 @@
 # Mongo-Postgres Query Converter
-[MongoDB query documents](https://docs.mongodb.org/manual/tutorial/query-documents/) are useful, but only work with Mongo. This converts a Mongo query to a PostgreSQL WHERE clause on data stored in a json/jsonb field.
+[MongoDB query documents](https://docs.mongodb.org/manual/tutorial/query-documents/) are quite powerful.
+This brings part of that usefulsness to PostgreSQL by letting you query in a similar way.
+This tool converts a Mongo query to a PostgreSQL "where" clause for data stored in a jsonb field.
 
-### Example 1
+### Query Example 1
 ```javascript
 { 'address.city': 'provo',
   name: 'Thomas',
   age: { '$gte': '30' } }
 ```
-becomes
+becomes the following Postgres query
 ```sql
 (data->'address'->>'city'='provo') and (data->>'name'='Thomas') and (data->>'age'>='30')
 ```
 
-### Example 2
+### Query Example 2
 ```javascript
 {
      $or: [ { qty: { $gt: 100 } }, { price: { $lt: 9.95 } } ]
 }
 ```
-becomes
+becomes the following Postgres query
 ```sql
 ((data->'qty'>'100'::jsonb) OR (data->'price'<'9.95'::jsonb))
 ```
@@ -30,11 +32,15 @@ npm install mongo-query-to-postgres-jsonb
 ```
 
 ```javascript
-var mongoToPostgres = require('mongo-query-to-postgres-jsonb');
-mongoToPostgres('data', query)
+var mongoToPostgres = require('mongo-query-to-postgres-jsonb')
+var query = { field: 'value' }
+var sqlQuery = mongoToPostgres('data', query)
+console.log(sqlQuery)
 ```
 
-The first parameter is the name of your jsonb column in your postgres table. The second parameter is the Mongo style query.
+The first parameter, "data", is the name of your jsonb column in your postgres table.
+The second parameter is the Mongo style query.
+There is an optional third parameter explained in the next section.
 
 ## Match a Field Without Specifying Array Index
 
@@ -53,7 +59,7 @@ Example document.
   }]
 }
 ```
-
+Unlike Mongo, this tool doesn't know which fields are arrays and requires you to supply a list optionally as a third parameter.
 Example query to match when there is a course with a distance of "5K".
 ```javascript
 mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
