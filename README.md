@@ -2,8 +2,12 @@
 [MongoDB query documents](https://docs.mongodb.org/manual/tutorial/query-documents/) are quite powerful.
 This brings part of that usefulsness to PostgreSQL by letting you query in a similar way.
 This tool converts a Mongo query to a PostgreSQL "where" clause for data stored in a jsonb field.
+It also has additional converters for Mongo projections which are like "select" clauses and for update queries.
 
-### Query Example 1
+The goal of this is to eventually provide an adapter which lets Postgres serve as a drop in replacement for Mongo, but that is not there yet.
+Currently the project has many of the underlying conversions that will be required to do this.
+
+### Select Query Example 1
 ```javascript
 { 'address.city': 'provo',
   name: 'Thomas',
@@ -14,7 +18,7 @@ becomes the following Postgres query
 (data->'address'->>'city'='provo') and (data->>'name'='Thomas') and (data->>'age'>='30')
 ```
 
-### Query Example 2
+### Select Query Example 2
 ```javascript
 {
      $or: [ { qty: { $gt: 100 } }, { price: { $lt: 9.95 } } ]
@@ -42,7 +46,29 @@ The first parameter, "data", is the name of your jsonb column in your postgres t
 The second parameter is the Mongo style query.
 There is an optional third parameter explained in the next section.
 
-## Match a Field Without Specifying Array Index
+### Projection Example
+
+```javascript
+{ field: 1 })
+```
+becomes the following Postgres query
+```sql
+jsonb_build_object('field', data->'field', '_id', data->'_id')'
+```
+
+### Update Example
+
+
+```javascript
+{ field: 1 })
+```
+becomes the following Postgres query
+```sql
+jsonb_set(jsonb_set(data,'{active}','true'::jsonb),'{purchases}',to_jsonb(Cast(data->>'purchases' as numeric)+2))
+```
+
+
+## Select: Match a Field Without Specifying Array Index
 
 * [Mongo Docs](https://docs.mongodb.org/manual/tutorial/query-documents/#match-a-field-without-specifying-array-index)
 
@@ -76,11 +102,15 @@ mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
 * [$exists](https://docs.mongodb.org/manual/reference/operator/query/exists/#op._S_exists)
 * [$mod](https://docs.mongodb.com/manual/reference/operator/query/mod/)
 
-## Todo
+## Filtering Todo
 * [Match an array element](https://docs.mongodb.org/manual/tutorial/query-documents/#match-an-array-element)
 * [$all](https://docs.mongodb.com/manual/reference/operator/query/all/)
 * [$expr](https://docs.mongodb.com/manual/reference/operator/query/expr/)
 * [Bitwise Operators](https://docs.mongodb.com/manual/reference/operator/query-bitwise/)
+
+## Update Todo
+* [$currentDate](https://docs.mongodb.com/manual/reference/operator/update/currentDate/)
+* [$setOnInsert](https://docs.mongodb.com/manual/reference/operator/update/setOnInsert/)
 
 ## See also
 * [PostgreSQL json/jsonb functions and operators](http://www.postgresql.org/docs/9.4/static/functions-json.html)
