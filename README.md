@@ -60,7 +60,10 @@ jsonb_build_object('field', data->'field', '_id', data->'_id')'
 
 
 ```javascript
-{ field: 1 })
+{
+  $set: { active: true },
+  $inc: { purchases: 2 }
+}
 ```
 becomes the following Postgres query
 ```sql
@@ -102,17 +105,21 @@ mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
 * [$exists](https://docs.mongodb.org/manual/reference/operator/query/exists/#op._S_exists)
 * [$mod](https://docs.mongodb.com/manual/reference/operator/query/mod/)
 
-## Filtering Todo
-* [Match an array element](https://docs.mongodb.org/manual/tutorial/query-documents/#match-an-array-element)
-* [$all](https://docs.mongodb.com/manual/reference/operator/query/all/)
-* [$expr](https://docs.mongodb.com/manual/reference/operator/query/expr/)
-* [Bitwise Operators](https://docs.mongodb.com/manual/reference/operator/query-bitwise/)
-
-## Update Todo
-* [$currentDate](https://docs.mongodb.com/manual/reference/operator/update/currentDate/)
-* [$setOnInsert](https://docs.mongodb.com/manual/reference/operator/update/setOnInsert/)
+## Todo
+* Filtering
+    * [Match an array element](https://docs.mongodb.org/manual/tutorial/query-documents/#match-an-array-element)
+    * [$all](https://docs.mongodb.com/manual/reference/operator/query/all/)
+    * [$expr](https://docs.mongodb.com/manual/reference/operator/query/expr/)
+    * [Bitwise Operators](https://docs.mongodb.com/manual/reference/operator/query-bitwise/)
+* Update
+    * [$currentDate](https://docs.mongodb.com/manual/reference/operator/update/currentDate/)
+    * [$setOnInsert](https://docs.mongodb.com/manual/reference/operator/update/setOnInsert/)
+* Other
+    * [Sort query conversions](https://docs.mongodb.com/manual/reference/method/cursor.sort/#cursor.sort)
 
 ## See also
 * [PostgreSQL json/jsonb functions and operators](http://www.postgresql.org/docs/9.4/static/functions-json.html)
 * [PostgreSQL json documentation](http://www.postgresql.org/docs/9.4/static/datatype-json.html)
 * [MongoDB query documention](https://docs.mongodb.org/manual/tutorial/query-documents/)
+* [PostgreSQL Array Functions](https://www.postgresql.org/docs/9.3/static/functions-array.html)
+* [JSON array to PostgreSQL Array](https://dba.stackexchange.com/questions/54283/how-to-turn-json-array-into-postgres-array/54289#54289)
