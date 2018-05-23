@@ -117,3 +117,4 @@ module.exports = function (fieldName, query, arrays) {
 module.exports.convertDotNotation = util.convertDotNotation
 module.exports.convertSelect = require('./select');
 module.exports.convertUpdate = require('./update');
+module.exports.convertSort = require('./sort');

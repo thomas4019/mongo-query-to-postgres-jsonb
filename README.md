@@ -49,7 +49,7 @@ There is an optional third parameter explained in the next section.
 ### Projection Example
 
 ```javascript
-{ field: 1 })
+mongoToPostgres.convertSelect('data', { field: 1 })
 ```
 becomes the following Postgres query
 ```sql
@@ -60,16 +60,28 @@ jsonb_build_object('field', data->'field', '_id', data->'_id')'
 
 
 ```javascript
-{
+mongoToPostgres.convertUpdate('data', {
   $set: { active: true },
   $inc: { purchases: 2 }
-}
+})
 ```
 becomes the following Postgres query
 ```sql
 jsonb_set(jsonb_set(data,'{active}','true'::jsonb),'{purchases}',to_jsonb(Cast(data->>'purchases' as numeric)+2))
 ```
 
+### Sort Example
+
+```javascript
+mongoToPostgres.convertSort('data', {
+  age: -1,
+  'first.name': 1
+})
+```
+becomes the following Postgres query
+```sql
+data->'age' DESC, data->'first'->'name' ASC
+```
 
 ## Select: Match a Field Without Specifying Array Index
 
