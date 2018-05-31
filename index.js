@@ -19,11 +19,16 @@ function convertOp(path, op, value, parent, arrayPaths) {
     for (var arrPath of arrayPaths) {
       if (op.startsWith(arrPath)) {
         var subPath = op.split('.')
-        var innerPath = ['value', subPath.pop()]
+        var innerPath = subPath.length > 1 ? ['value', subPath.pop()] : ['value']
         var innerText = util.pathToText(innerPath, typeof value === 'string')
         path = path.concat(subPath)
         var text = util.pathToText(path, false)
-        return 'EXISTS (SELECT * FROM jsonb_array_elements(' + text + ') WHERE ' + innerText + '=' + util.quote(value) + ')'
+        if (value['$in']) {
+          const sub = convert(innerPath, value)
+          return 'EXISTS (SELECT * FROM jsonb_array_elements(' + text + ') WHERE ' + sub + ')'
+        } else {
+          return 'EXISTS (SELECT * FROM jsonb_array_elements(' + text + ') WHERE ' + innerText + '=' + util.quote(value) + ')'
+        }
       }
     }
   }

@@ -170,10 +170,15 @@ describe('$mod', function () {
 
 describe('Match a Field Without Specifying Array Index', function () {
   it('basic case', function() {
-    assert.equal('EXISTS (SELECT * FROM jsonb_array_elements(data->\'courses\') WHERE value->>\'distance\'=\'5K\')', convert('data', { 'courses.distance': '5K' }, ['courses']))
+    assert.equal("EXISTS (SELECT * FROM jsonb_array_elements(data->'courses') WHERE value->>'distance'='5K')", convert('data', { 'courses.distance': '5K' }, ['courses']))
+  })
+  it('direct match', function() {
+    assert.equal('EXISTS (SELECT * FROM jsonb_array_elements(data->\'roles\') WHERE value #>>\'{}\'=\'Admin\')', convert('data', { 'roles': 'Admin' }, ['roles']))
+  })
+  it('$in', function() {
+    assert.equal("EXISTS (SELECT * FROM jsonb_array_elements(data->'roles') WHERE value #>>'{}' IN ('Test', 'Admin'))", convert('data', { 'roles': { $in: ["Test", "Admin"] } }, ['roles']))
   })
 })
-
 describe('special cases', function () {
   it('should return true when passed no parameters', function() {
     assert.equal('TRUE', convert('data', {}))
