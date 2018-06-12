@@ -17,7 +17,7 @@ exports.stringEscape = function(str) {
 exports.pathToText = function(path, isString) {
   var text = exports.stringEscape(path[0])
   if (isString && path.length === 1) {
-    return text + " #>>'{}'"
+    return text + ' #>>\'{}\''
   }
   for (var i = 1; i < path.length; i++) {
     text += (i == path.length-1 && isString ? '->>' : '->')

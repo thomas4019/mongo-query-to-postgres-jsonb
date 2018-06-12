@@ -41,8 +41,8 @@ describe('number equality', function () {
 })
 
 describe('$or', function () {
-  it('returns false with no parameters', function () {
-    assert.equal('FALSE', convert('data', {$or: []}))
+  it('errors with no parameters', function () {
+    assert.throws(() => convert('data', { $or: [] }), '$and/$or/$nor must be a nonempty array')
   })
   it('work with one parameter', function () {
     assert.equal('(data->>\'name\'=\'thomas\')', convert('data', {$or: [{name: 'thomas'}]}))
@@ -58,8 +58,8 @@ describe('$nor', function () {
 })
 
 describe('$and', function () {
-  it('returns true with no parameters', function () {
-    assert.equal('TRUE', convert('data', {$and: []}))
+  it('errors with no parameters', function () {
+    assert.throws(() => convert('data', { $and: [] }), '$and/$or/$nor must be a nonempty array')
   })
   it('work with one parameter', function () {
     assert.equal('(data->>\'name\'=\'thomas\')', convert('data', {$and: [{name: 'thomas'}]}))
@@ -122,10 +122,16 @@ describe('comparision operators', function() {
 
 describe('regular expressions', function() {
   it('basic', function () {
-    assert.equal('data->>\'type\' ~ \'food\'', convert('data', { type: { $regex : 'food' } }))
+    assert.equal('data->>\'type\' ~ \'(?p)food\'', convert('data', { type: { $regex : 'food' } }))
   })
   it('case insensitive', function () {
-    assert.equal('data->>\'type\' ~* \'food\'', convert('data', { type: { $regex : 'food', $options: 'i' } }))
+    assert.equal('data->>\'type\' ~* \'(?p)food\'', convert('data', { type: { $regex : 'food', $options: 'i' } }))
+  })
+  it('js regex', function () {
+    assert.equal('data->>\'type\' ~ \'food\'', convert('data', { type: /food/ }))
+  })
+  it('make dot match multiline', function () {
+    assert.equal('data->>\'type\' ~* \'food\'', convert('data', { type: { $regex : 'food', $options: 'si' } }))
   })
 })
 

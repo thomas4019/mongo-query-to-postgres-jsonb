@@ -15,6 +15,9 @@ function convertOp(input, op, data, fieldName) {
   const pgQueryPathStr = util.pathToText([fieldName].concat(path), true)
   switch (op) {
     case '$set':
+      if (path.pop() === '_id') {
+        throw new Error('Mod on _id not allowed')
+      }
       return 'jsonb_set(' + input + ',' + pgPath + ',' + util.quote2(value) + ')'
       break;
     case '$unset':
@@ -34,7 +37,8 @@ function convertOp(input, op, data, fieldName) {
       return 'array_remove(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ')),' + util.quote2(value) + ')'
     case '$push':
       const v = util.quote2(value);
-      return 'array_append(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ') WHERE value != ' + v + '),' + v + ')'
+      const updatedArray = 'to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ') WHERE value != ' + v + '),' + v + '))'
+      return 'jsonb_set(' + input + ',' + pgPath + ',' + updatedArray + ')'
   }
 }
 

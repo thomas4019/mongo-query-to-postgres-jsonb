@@ -53,7 +53,7 @@ describe('update: ', function() {
       assert.equal(convertUpdate('data', { $pull: { cities: 'LA' } }), 'array_remove(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\')),\'"LA"\')')
     })
     it('$push', function() {
-      assert.equal(convertUpdate('data', { $push: { cities: 'LA' } }), 'array_append(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\') WHERE value != \'"LA"\'),\'"LA"\')')
+      assert.equal(convertUpdate('data', { $push: { cities: 'LA' } }), 'jsonb_set(data,\'{cities}\',to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\') WHERE value != \'"LA"\'),\'"LA"\')))')
     })
   })
 

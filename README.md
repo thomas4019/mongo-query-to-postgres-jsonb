@@ -6,6 +6,7 @@ It also has additional converters for Mongo projections which are like "select" 
 
 The goal of this is to eventually provide an adapter which lets Postgres serve as a drop in replacement for Mongo, but that is not there yet.
 Currently the project has many of the underlying conversions that will be required to do this.
+For that project, see [pgmongo](https://github.com/thomas4019/pgmongo).
 
 ### Select Query Example 1
 ```javascript
@@ -124,6 +125,7 @@ mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
     * [$expr](https://docs.mongodb.com/manual/reference/operator/query/expr/)
     * [Bitwise Operators](https://docs.mongodb.com/manual/reference/operator/query-bitwise/)
 * Update
+    * [$pop](https://docs.mongodb.com/manual/reference/operator/update/pop/)
     * [$currentDate](https://docs.mongodb.com/manual/reference/operator/update/currentDate/)
     * [$setOnInsert](https://docs.mongodb.com/manual/reference/operator/update/setOnInsert/)
 * Other

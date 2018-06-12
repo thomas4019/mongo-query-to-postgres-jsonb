@@ -56,7 +56,10 @@ var convert = function (fieldName, projection) {
   if (removals.length) {
     out += ' ' + removals.join(' ')
   }
-  return out
+  if (out === fieldName){
+    return fieldName
+  }
+  return out + ' as ' + fieldName
 }
 
 module.exports = convert

@@ -44,21 +44,38 @@ function convertOp(path, op, value, parent, arrayPaths) {
         throw new Error('$and or $or requires an array.')
       }
       if (value.length == 0) {
-        return (op === '$or' ? 'FALSE' : 'TRUE')
+        throw new Error('$and/$or/$nor must be a nonempty array')
       } else {
+        for (const v of value) {
+          if (typeof v !== "object") {
+            throw new Error('$or/$and/$nor entries need to be full objects')
+          }
+        }
         return '(' + value.map((subquery) => convert(path, subquery)).join(op === '$or' ? ' OR ' : ' AND ') + ')'
       }
     case '$elemMatch':
       return util.pathToText(path, false) + ' @> \'' + util.stringEscape(JSON.stringify(value)) + '\'::jsonb'
     case '$in':
     case '$nin':
-      return util.pathToText(path, typeof value[0] == 'string') + (op == '$nin' ? ' NOT' : '') + ' IN (' + value.map(util.quote).join(', ') + ')'
+      if (value.length === 1) {
+        return convert(path, value[0], arrayPaths)
+      }
+      const cleanedValue = value.filter((v) => (v !== null && typeof v !== 'undefined'))
+      let partial = util.pathToText(path, typeof value[0] == 'string') + (op == '$nin' ? ' NOT' : '') + ' IN (' + cleanedValue.map(util.quote).join(', ') + ')'
+      if (value.length != cleanedValue.length) {
+        return (op === '$in' ? '(' + partial + ' OR IS NULL)' : '(' + partial + ' AND IS NOT NULL)'  )
+      }
+      return partial
     case '$regex':
       var op = '~'
+      var op2 = '';
       if (parent['$options'] && parent['$options'].includes('i')) {
         op += '*'
       }
-      return util.pathToText(path, true) + ' ' + op + ' \'' + util.stringEscape(value) + '\''
+      if (!parent['$options'] || !parent['$options'].includes('s')) {
+        op2 += '(?p)'
+      }
+      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value) + '\''
     case '$eq':
     case '$gt':
     case '$gte':
@@ -93,7 +110,15 @@ var convert = function (path, query, arrayPaths) {
     var text = util.pathToText(path, typeof query == 'string')
     return text + '=' + util.quote(query)
   }
-  if (typeof query == 'object') {
+  if (query === null) {
+    var text = util.pathToText(path, false)
+    return '(' + text + ' IS NULL OR ' + text + ' = \'null\'::jsonb)'
+  }
+  if (query instanceof RegExp) {
+    var op = query.ignoreCase ? '~*' : '~'
+    return util.pathToText(path, true) + ' ' + op + ' \'' + util.stringEscape(query.source) + '\''
+  }
+  if (typeof query === 'object') {
     // Check for an empty object
     if (Object.keys(query).length === 0) {
       return 'TRUE'
@@ -120,6 +145,7 @@ module.exports = function (fieldName, query, arrays) {
   return convert([fieldName], query, arrays || [])
 }
 module.exports.convertDotNotation = util.convertDotNotation
+module.exports.pathToText = util.pathToText
 module.exports.convertSelect = require('./select');
 module.exports.convertUpdate = require('./update');
 module.exports.convertSort = require('./sort');

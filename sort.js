@@ -1,7 +1,7 @@
 var util = require('./util.js')
 
 var convertField = function (fieldName, field, orderingType) {
-  const dir = (orderingType === 1 ? 'ASC' : 'DESC')
+  const dir = (orderingType === 1 ? 'ASC NULLS FIRST' : 'DESC NULLS LAST')
   const value = util.pathToText([fieldName].concat(field.split('.')), false)
   return value + ' ' + dir;
 }
