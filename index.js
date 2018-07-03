@@ -11,24 +11,48 @@ var ops = {
 }
 
 var otherOps = {
-  $in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true, $regex: true, $type: true, $size: true, $exists: true, $mod: true
+  $all: true, $in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true, $regex: true, $type: true, $size: true, $exists: true, $mod: true
 }
 
 function convertOp(path, op, value, parent, arrayPaths) {
   if (arrayPaths) {
     for (var arrPath of arrayPaths) {
       if (op.startsWith(arrPath)) {
-        var subPath = op.split('.')
-        var innerPath = subPath.length > 1 ? ['value', subPath.pop()] : ['value']
-        var innerText = util.pathToText(innerPath, typeof value === 'string')
+        const subPath = op.split('.')
+        const innerPath = subPath.length > 1 ? ['value', subPath.pop()] : ['value']
+        const singleElementQuery = convertOp(path, op, value, parent, [])
         path = path.concat(subPath)
-        var text = util.pathToText(path, false)
-        if (value['$in']) {
-          const sub = convert(innerPath, value)
-          return 'EXISTS (SELECT * FROM jsonb_array_elements(' + text + ') WHERE ' + sub + ')'
+        const text = util.pathToText(path, false)
+        const safeArray = "jsonb_typeof(data->'a')='array' AND";
+        let arrayQuery = '';
+        if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+          if (value['$elemMatch']) {
+            const sub = convert(innerPath, value['$elemMatch'], [], false)
+            arrayQuery = `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
+          } else if (value['$in']) {
+            const sub = convert(innerPath, value, [], true)
+            arrayQuery = `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
+          } else if (value['$all']) {
+            const cleanedValue = value['$all'].filter((v) => (v !== null && typeof v !== 'undefined'))
+            arrayQuery = '(' + cleanedValue.map(function (subquery) {
+              const sub = convert(innerPath, subquery, [], false)
+              return `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
+            }).join(' AND ') + ')'
+          } else {
+            const params = value
+            arrayQuery = '(' + Object.keys(params).map(function (subKey) {
+              const sub = convert(innerPath, { [subKey]: params[subKey] }, [], true)
+              return `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
+            }).join(' AND ') + ')'
+          }
         } else {
-          return 'EXISTS (SELECT * FROM jsonb_array_elements(' + text + ') WHERE ' + innerText + '=' + util.quote(value) + ')'
+          const sub = convert(innerPath, value, [], true)
+          arrayQuery = `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
         }
+        if (!arrayQuery) {
+          return singleElementQuery
+        }
+        return `(${singleElementQuery} OR ${arrayQuery})`
       }
     }
   }
@@ -53,8 +77,10 @@ function convertOp(path, op, value, parent, arrayPaths) {
         }
         return '(' + value.map((subquery) => convert(path, subquery)).join(op === '$or' ? ' OR ' : ' AND ') + ')'
       }
+    // TODO (make sure this handles multiple elements correctly)
     case '$elemMatch':
-      return util.pathToText(path, false) + ' @> \'' + util.stringEscape(JSON.stringify(value)) + '\'::jsonb'
+      return convert(path, value, arrayPaths)
+      //return util.pathToText(path, false) + ' @> \'' + util.stringEscape(JSON.stringify(value)) + '\'::jsonb'
     case '$in':
     case '$nin':
       if (value.length === 1) {
@@ -105,7 +131,15 @@ function convertOp(path, op, value, parent, arrayPaths) {
   }
 }
 
-var convert = function (path, query, arrayPaths) {
+/**
+ * Convert a filter expression to the corresponding PostgreSQL text.
+ * @param path {Array} The current path
+ * @param query {Mixed} Any value
+ * @param arrayPaths {Array} List of dotted paths that possibly need to be handled as arrays.
+ * @param forceExact {Boolean} When true, an exact match will be required.
+ * @returns The corresponding PSQL expression
+ */
+var convert = function (path, query, arrayPaths, forceExact=false) {
   if (typeof query === 'string' || typeof query === 'boolean' || typeof query == 'number' || Array.isArray(query)) {
     var text = util.pathToText(path, typeof query == 'string')
     return text + '=' + util.quote(query)
@@ -124,7 +158,7 @@ var convert = function (path, query, arrayPaths) {
       return 'TRUE'
     }
     var specialKeys = Object.keys(query).filter(function (key) {
-      return (path.length === 1) || key in ops || key in otherOps
+      return (path.length === 1 && !forceExact) || key in ops || key in otherOps
     })
     switch (specialKeys.length) {
       case 0:

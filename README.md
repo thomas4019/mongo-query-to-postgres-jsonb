@@ -120,7 +120,6 @@ mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
 
 ## Todo
 * Filtering
-    * [Match an array element](https://docs.mongodb.org/manual/tutorial/query-documents/#match-an-array-element)
     * [$all](https://docs.mongodb.com/manual/reference/operator/query/all/)
     * [$expr](https://docs.mongodb.com/manual/reference/operator/query/expr/)
     * [Bitwise Operators](https://docs.mongodb.com/manual/reference/operator/query-bitwise/)
@@ -128,8 +127,9 @@ mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
     * [$pop](https://docs.mongodb.com/manual/reference/operator/update/pop/)
     * [$currentDate](https://docs.mongodb.com/manual/reference/operator/update/currentDate/)
     * [$setOnInsert](https://docs.mongodb.com/manual/reference/operator/update/setOnInsert/)
-* Other
-    * [Sort query conversions](https://docs.mongodb.com/manual/reference/method/cursor.sort/#cursor.sort)
+
+## Cannot Support
+* [$where](https://docs.mongodb.com/manual/reference/operator/query/where/)
 
 ## See also
 * [PostgreSQL json/jsonb functions and operators](http://www.postgresql.org/docs/9.4/static/functions-json.html)
