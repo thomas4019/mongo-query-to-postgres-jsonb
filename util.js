@@ -1,3 +1,11 @@
+exports.updateSpecialKeys = ['$currentDate', '$inc', '$min', '$max', '$mul', '$rename', '$set', '$setOnInsert', '$unset', '$push', '$pull', '$addToSet']
+
+exports.countUpdateSpecialKeys = function(doc) {
+  return Object.keys(doc).filter(function(n) {
+    return exports.updateSpecialKeys.includes(n)
+  }).length
+}
+
 exports.quote = function(data) {
   if (typeof data == 'string')
     return '\'' + exports.stringEscape(data) + '\''
@@ -21,7 +29,7 @@ exports.pathToText = function(path, isString) {
   }
   for (var i = 1; i < path.length; i++) {
     text += (i == path.length-1 && isString ? '->>' : '->')
-    if (/\d+/.test(path[i]))
+    if (/^\d+$/.test(path[i]))
       text += path[i] //don't wrap numbers in  quotes
     else
       text += '\'' + exports.stringEscape(path[i]) + '\''

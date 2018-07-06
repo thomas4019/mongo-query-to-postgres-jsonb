@@ -30,10 +30,10 @@ describe('select: ', function() {
 
   describe('excluded fields', function () {
     it('single excluded', function () {
-      assert.equal(convertSelect('data', { b: 0 }), "data #- '{b}' as data")
+      assert.equal(convertSelect('data', { b: 0 }), 'data #- \'{b}\' as data')
     })
     it('exclude deep', function () {
-      assert.equal(convertSelect('data', { 'field.inner': 0 }), "data #- '{field,inner}' as data")
+      assert.equal(convertSelect('data', { 'field.inner': 0 }), 'data #- \'{field,inner}\' as data')
     })
     it('combined exclusion and inclusion', function () {
       assert.throws(() => convertSelect('data', { a: 1, b: 0 }), 'Projection cannot have a mix of inclusion and exclusion.')

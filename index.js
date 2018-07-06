@@ -1,13 +1,14 @@
 var util = require('./util.js')
 
 // These are the simple operators.
+// Note that "is distinct from" needs to be used to ensure nulls are returned as expected, see https://modern-sql.com/feature/is-distinct-from
 var ops = {
   $eq: '=',
   $gt: '>',
   $gte: '>=',
   $lt: '<',
   $lte: '<=',
-  $ne: '!=',
+  $ne: ' IS DISTINCT FROM ',
 }
 
 var otherOps = {
@@ -23,8 +24,8 @@ function convertOp(path, op, value, parent, arrayPaths) {
         const singleElementQuery = convertOp(path, op, value, parent, [])
         path = path.concat(subPath)
         const text = util.pathToText(path, false)
-        const safeArray = "jsonb_typeof(data->'a')='array' AND";
-        let arrayQuery = '';
+        const safeArray = `jsonb_typeof(${text})='array' AND`
+        let arrayQuery = ''
         if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
           if (value['$elemMatch']) {
             const sub = convert(innerPath, value['$elemMatch'], [], false)
@@ -60,8 +61,8 @@ function convertOp(path, op, value, parent, arrayPaths) {
     case '$not':
       return '(NOT ' + convert(path, value) + ')'
     case '$nor':
-      var notted = value.map((e) => ({ $not: e }));
-      return convertOp(path, '$and', notted, value, arrayPaths);
+      var notted = value.map((e) => ({ $not: e }))
+      return convertOp(path, '$and', notted, value, arrayPaths)
     case '$or':
     case '$and':
       if (!Array.isArray(value)) {
@@ -71,7 +72,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
         throw new Error('$and/$or/$nor must be a nonempty array')
       } else {
         for (const v of value) {
-          if (typeof v !== "object") {
+          if (typeof v !== 'object') {
             throw new Error('$or/$and/$nor entries need to be full objects')
           }
         }
@@ -94,7 +95,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
       return partial
     case '$regex':
       var op = '~'
-      var op2 = '';
+      var op2 = ''
       if (parent['$options'] && parent['$options'].includes('i')) {
         op += '*'
       }
@@ -117,15 +118,20 @@ function convertOp(path, op, value, parent, arrayPaths) {
       var text = util.pathToText(path, false)
       return 'jsonb_array_length(' + text + ')=' + value
     case '$exists':
-      const key = path.pop();
-      var text = util.pathToText(path, false)
-      return text + ' ? ' + util.quote(key)
+      if (path.length > 1) {
+        const key = path.pop()
+        var text = util.pathToText(path, false)
+        return (value ? '' : ' NOT ') + text + ' ? ' + util.quote(key)
+      } else {
+        var text = util.pathToText(path, false)
+        return text + ' IS ' + (value ? 'NOT ' : '') + 'NULL'
+      }
     case '$mod':
       var text = util.pathToText(path, true)
       if (typeof value[0] != 'number' || typeof value[1] != 'number') {
         throw new Error('$mod requires numeric inputs')
       }
-      return 'cast(' + text + ' AS numeric) % ' + value[0] + '=' + value[1];
+      return 'cast(' + text + ' AS numeric) % ' + value[0] + '=' + value[1]
     default:
       return convert(path.concat(op.split('.')), value)
   }
@@ -165,11 +171,11 @@ var convert = function (path, query, arrayPaths, forceExact=false) {
         var text = util.pathToText(path, typeof query == 'string')
         return text + '=' + util.quote(query)
       case 1:
-        const key = specialKeys[0];
-        return convertOp(path, key, query[key], query, arrayPaths);
+        const key = specialKeys[0]
+        return convertOp(path, key, query[key], query, arrayPaths)
       default:
         return '(' + specialKeys.map(function (key) {
-          return convertOp(path, key, query[key], query, arrayPaths);
+          return convertOp(path, key, query[key], query, arrayPaths)
         }).join(' and ') + ')'
     }
   }
@@ -180,6 +186,7 @@ module.exports = function (fieldName, query, arrays) {
 }
 module.exports.convertDotNotation = util.convertDotNotation
 module.exports.pathToText = util.pathToText
-module.exports.convertSelect = require('./select');
-module.exports.convertUpdate = require('./update');
-module.exports.convertSort = require('./sort');
+module.exports.countUpdateSpecialKeys = util.countUpdateSpecialKeys
+module.exports.convertSelect = require('./select')
+module.exports.convertUpdate = require('./update')
+module.exports.convertSort = require('./sort')

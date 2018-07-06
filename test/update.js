@@ -20,6 +20,9 @@ describe('update: ', function() {
     it('$set multiple', function() {
       assert.equal(convertUpdate('data', { $set: { field: 'value', second: 2 } }), 'jsonb_set(jsonb_set(data,\'{second}\',\'2\'::jsonb),\'{field}\',\'"value"\')')
     })
+    it('$set deep', function() {
+      assert.equal(convertUpdate('data', { $set: { 'a.b': 2 } }), 'jsonb_set(jsonb_set(data,\'{a}\',COALESCE(data->\'a\', \'{}\'::jsonb)),\'{a,b}\',\'2\'::jsonb)')
+    })
 
     it('$unset', function() {
       assert.equal(convertUpdate('data', { $unset: { field: 'value' } }), 'data #- \'{field}\'')
@@ -53,7 +56,10 @@ describe('update: ', function() {
       assert.equal(convertUpdate('data', { $pull: { cities: 'LA' } }), 'array_remove(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\')),\'"LA"\')')
     })
     it('$push', function() {
-      assert.equal(convertUpdate('data', { $push: { cities: 'LA' } }), 'jsonb_set(data,\'{cities}\',to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\') WHERE value != \'"LA"\'),\'"LA"\')))')
+      assert.equal(convertUpdate('data', { $push: { cities: 'LA' } }), 'jsonb_set(data,\'{cities}\',to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\')),\'"LA"\')))')
+    })
+    it('$addToSet', function() {
+      assert.equal(convertUpdate('data', { $addToSet: { cities: 'LA' } }), 'jsonb_set(data,\'{cities}\',to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\') WHERE value != \'"LA"\'),\'"LA"\')))')
     })
   })
 

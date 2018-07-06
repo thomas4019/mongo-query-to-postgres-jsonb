@@ -7,7 +7,7 @@ var convert = function (fieldName, projection) {
   }
   //var output = '';
   var shellDoc = {}
-  var removals = [];
+  var removals = []
   Object.keys(projection).forEach(function(field) {
     var path = field.split('.')
     if (projection[field] === 1) {
@@ -52,7 +52,7 @@ var convert = function (fieldName, projection) {
       return 'jsonb_build_object(' + entries.join(', ') + ')'
     }
   }
-  var out = Object.keys(shellDoc).length > 0 ? convertRecur(shellDoc) : fieldName;
+  var out = Object.keys(shellDoc).length > 0 ? convertRecur(shellDoc) : fieldName
   if (removals.length) {
     out += ' ' + removals.join(' ')
   }

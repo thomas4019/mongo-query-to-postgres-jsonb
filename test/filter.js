@@ -24,7 +24,7 @@ describe('array equality', function () {
     assert.equal('data->\'roles\'->>0=\'Admin\'', convert('data', {'roles.0': 'Admin'}))
   })
   it('support element matching', function() {
-    assert.equal('data->\'roles\' @> \'"Admin"\'::jsonb', convert('data', {'roles': {$elemMatch: 'Admin'}}))
+    assert.equal('data->>\'roles\'=\'Admin\'', convert('data', {'roles': {$elemMatch: 'Admin'}}))
   })
 })
 
@@ -104,7 +104,7 @@ describe('comparision operators', function() {
     assert.equal('data->>\'type\'=\'food\'', convert('data', { type: { $eq : 'food' } }))
   })
   it('$ne', function () {
-    assert.equal('data->>\'type\'!=\'food\'', convert('data', { type: { $ne : 'food' } }))
+    assert.equal('data->>\'type\' IS DISTINCT FROM \'food\'', convert('data', { type: { $ne : 'food' } }))
   })
   it('$gt', function () {
     assert.equal('data->\'count\'>\'5\'::jsonb', convert('data', { count: { $gt : 5 } }))
