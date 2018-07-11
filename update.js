@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const util = require('./util.js')
+const convertWhere = require('./index.js')
 
 function convertOp(input, op, data, fieldName, upsert) {
   const pathText = Object.keys(data)[0]
@@ -43,7 +44,12 @@ function convertOp(input, op, data, fieldName, upsert) {
       const pgNewPath = util.toPostgresPath(value.split('.'))
       return 'jsonb_set(' + input + ',' + pgNewPath + ',' + pgQueryPath + ') #- ' + pgPath
     case '$pull':
-      return 'array_remove(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ')),' + util.quote2(value) + ')'
+      const newArray = 'to_jsonb(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ') WHERE NOT ' + convertWhere('value', value, upsert) + '))'
+      return 'jsonb_set(' + input + ',' + pgPath + ',' + newArray + ')'
+    case '$pullAll':
+      const pullValues = '(' + value.map((v) => util.quote2(v)).join(',') + ')'
+      const newArray2 = 'to_jsonb(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ') WHERE value NOT IN ' + pullValues + '))'
+      return 'jsonb_set(' + input + ',' + pgPath + ',' + newArray2 + ')'
     case '$push':
       const v2 = util.quote2(value)
       if (upsert) {

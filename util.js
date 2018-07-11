@@ -1,4 +1,4 @@
-exports.updateSpecialKeys = ['$currentDate', '$inc', '$min', '$max', '$mul', '$rename', '$set', '$setOnInsert', '$unset', '$push', '$pull', '$addToSet']
+exports.updateSpecialKeys = ['$currentDate', '$inc', '$min', '$max', '$mul', '$rename', '$set', '$setOnInsert', '$unset', '$push', '$pull', '$pullAll', '$addToSet']
 
 exports.countUpdateSpecialKeys = function(doc) {
   return Object.keys(doc).filter(function(n) {
@@ -47,4 +47,23 @@ exports.toPostgresPath = function(path) {
 
 exports.toNumeric = function(path) {
   return 'Cast(' + path + ' as numeric)'
+}
+
+const typeMapping = {
+  1: 'number',
+  2: 'string',
+  3: 'object',
+  4: 'array',
+  8: 'boolean',
+  10: 'null',
+  16: 'number',
+  18: 'number',
+  19: 'number'
+}
+
+exports.getPostgresTypeName = function(type) {
+  if (!['string', 'number'].includes(typeof type)) {
+    throw { errmsg: 'argument to $type is not a number or a string', code: 14 }
+  }
+  return typeMapping[type] || type
 }

@@ -117,10 +117,10 @@ mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
 * [$size](https://docs.mongodb.org/manual/reference/operator/query/size/#op._S_size)
 * [$exists](https://docs.mongodb.org/manual/reference/operator/query/exists/#op._S_exists)
 * [$mod](https://docs.mongodb.com/manual/reference/operator/query/mod/)
+* [$all](https://docs.mongodb.com/manual/reference/operator/query/all/)
 
 ## Todo
 * Filtering
-    * [$all](https://docs.mongodb.com/manual/reference/operator/query/all/)
     * [$expr](https://docs.mongodb.com/manual/reference/operator/query/expr/)
     * [Bitwise Operators](https://docs.mongodb.com/manual/reference/operator/query-bitwise/)
 * Update

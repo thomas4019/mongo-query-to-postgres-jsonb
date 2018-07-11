@@ -1,4 +1,5 @@
-var util = require('./util.js')
+const util = require('./util.js')
+const _ = require('lodash')
 
 // These are the simple operators.
 // Note that "is distinct from" needs to be used to ensure nulls are returned as expected, see https://modern-sql.com/feature/is-distinct-from
@@ -12,7 +13,7 @@ var ops = {
 }
 
 var otherOps = {
-  $all: true, $in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true, $regex: true, $type: true, $size: true, $exists: true, $mod: true
+  $all: true, $in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true, $regex: true, $type: true, $size: true, $exists: true, $mod: true, $text: true
 }
 
 function convertOp(path, op, value, parent, arrayPaths) {
@@ -27,9 +28,12 @@ function convertOp(path, op, value, parent, arrayPaths) {
         const safeArray = `jsonb_typeof(${text})='array' AND`
         let arrayQuery = ''
         if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-          if (value['$elemMatch']) {
+          if (typeof value['$size'] !== 'undefined') {
+            // size does not support array element based matching
+          } else if (value['$elemMatch']) {
             const sub = convert(innerPath, value['$elemMatch'], [], false)
             arrayQuery = `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
+            return arrayQuery
           } else if (value['$in']) {
             const sub = convert(innerPath, value, [], true)
             arrayQuery = `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
@@ -50,7 +54,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
           const sub = convert(innerPath, value, [], true)
           arrayQuery = `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
         }
-        if (!arrayQuery) {
+        if (!arrayQuery || arrayQuery === '()') {
           return singleElementQuery
         }
         return `(${singleElementQuery} OR ${arrayQuery})`
@@ -61,6 +65,11 @@ function convertOp(path, op, value, parent, arrayPaths) {
     case '$not':
       return '(NOT ' + convert(path, value) + ')'
     case '$nor':
+      for (const v of value) {
+        if (typeof v !== 'object') {
+          throw new Error('$or/$and/$nor entries need to be full objects')
+        }
+      }
       var notted = value.map((e) => ({ $not: e }))
       return convertOp(path, '$and', notted, value, arrayPaths)
     case '$or':
@@ -76,7 +85,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
             throw new Error('$or/$and/$nor entries need to be full objects')
           }
         }
-        return '(' + value.map((subquery) => convert(path, subquery)).join(op === '$or' ? ' OR ' : ' AND ') + ')'
+        return '(' + value.map((subquery) => convert(path, subquery, arrayPaths)).join(op === '$or' ? ' OR ' : ' AND ') + ')'
       }
     // TODO (make sure this handles multiple elements correctly)
     case '$elemMatch':
@@ -84,6 +93,9 @@ function convertOp(path, op, value, parent, arrayPaths) {
       //return util.pathToText(path, false) + ' @> \'' + util.stringEscape(JSON.stringify(value)) + '\'::jsonb'
     case '$in':
     case '$nin':
+      if (value.length === 0) {
+        return 'FALSE'
+      }
       if (value.length === 1) {
         return convert(path, value[0], arrayPaths)
       }
@@ -93,6 +105,13 @@ function convertOp(path, op, value, parent, arrayPaths) {
         return (op === '$in' ? '(' + partial + ' OR IS NULL)' : '(' + partial + ' AND IS NOT NULL)'  )
       }
       return partial
+    case '$text':
+      var op = '~'
+      var op2 = ''
+      if (!value['$caseSensitive']) {
+        op += '*'
+      }
+      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value['$search']) + '\''
     case '$regex':
       var op = '~'
       var op2 = ''
@@ -113,8 +132,12 @@ function convertOp(path, op, value, parent, arrayPaths) {
       return text + ops[op] + util.quote(value)
     case '$type':
       var text = util.pathToText(path, false)
-      return 'jsonb_typeof(' + text + ')=' + util.quote(value)
+      const type = util.getPostgresTypeName(value)
+      return 'jsonb_typeof(' + text + ')=' + util.quote(type)
     case '$size':
+      if (typeof value !== 'number' || value < 0 || !_.isInteger(value)) {
+        throw new Error('$size only supports positive integer')
+      }
       var text = util.pathToText(path, false)
       return 'jsonb_array_length(' + text + ')=' + value
     case '$exists':
