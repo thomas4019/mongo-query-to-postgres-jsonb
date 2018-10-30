@@ -176,13 +176,13 @@ describe('$mod', function () {
 
 describe('Match a Field Without Specifying Array Index', function () {
   it('basic case', function() {
-    assert.equal("EXISTS (SELECT * FROM jsonb_array_elements(data->'courses') WHERE value->>'distance'='5K')", convert('data', { 'courses.distance': '5K' }, ['courses']))
+    assert.equal("(data->'courses'->>'distance'='5K' OR EXISTS (SELECT * FROM jsonb_array_elements(data->'courses') WHERE jsonb_typeof(data->'courses')='array' AND value->>'distance'='5K'))", convert('data', { 'courses.distance': '5K' }, ['courses']))
   })
   it('direct match', function() {
-    assert.equal('EXISTS (SELECT * FROM jsonb_array_elements(data->\'roles\') WHERE value #>>\'{}\'=\'Admin\')', convert('data', { 'roles': 'Admin' }, ['roles']))
+    assert.equal('(data->>\'roles\'=\'Admin\' OR EXISTS (SELECT * FROM jsonb_array_elements(data->\'roles\') WHERE jsonb_typeof(data->\'roles\')=\'array\' AND value #>>\'{}\'=\'Admin\'))', convert('data', { 'roles': 'Admin' }, ['roles']))
   })
   it('$in', function() {
-    assert.equal("EXISTS (SELECT * FROM jsonb_array_elements(data->'roles') WHERE value #>>'{}' IN ('Test', 'Admin'))", convert('data', { 'roles': { $in: ["Test", "Admin"] } }, ['roles']))
+    assert.equal("(data->>'roles' IN ('Test', 'Admin') OR EXISTS (SELECT * FROM jsonb_array_elements(data->'roles') WHERE jsonb_typeof(data->'roles')='array' AND value #>>'{}' IN ('Test', 'Admin')))", convert('data', { 'roles': { $in: ["Test", "Admin"] } }, ['roles']))
   })
 })
 describe('special cases', function () {
