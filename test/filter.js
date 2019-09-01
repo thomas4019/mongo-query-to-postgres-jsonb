@@ -151,6 +151,12 @@ describe('$size', function () {
   it('match array sizes', function() {
     assert.equal('jsonb_array_length(data->\'arr\')=3', convert('data', { arr: { $size: 3 } }))
   })
+  it('fail for strings', function() {
+    assert.throws(() => convert('data', { arr: { $size: 'abc' } }), '$size only supports positive integer')
+  })
+  it('fail for decimals', function() {
+    assert.throws(() => convert('data', { arr: { $size: 3.5 } }), '$size only supports positive integer')
+  })
 })
 
 describe('$type', function () {

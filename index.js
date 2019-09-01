@@ -1,5 +1,4 @@
 const util = require('./util.js')
-const _ = require('lodash')
 
 // These are the simple operators.
 // Note that "is distinct from" needs to be used to ensure nulls are returned as expected, see https://modern-sql.com/feature/is-distinct-from
@@ -135,7 +134,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
       const type = util.getPostgresTypeName(value)
       return 'jsonb_typeof(' + text + ')=' + util.quote(type)
     case '$size':
-      if (typeof value !== 'number' || value < 0 || !_.isInteger(value)) {
+      if (typeof value !== 'number' || value < 0 || !Number.isInteger(value)) {
         throw new Error('$size only supports positive integer')
       }
       var text = util.pathToText(path, false)

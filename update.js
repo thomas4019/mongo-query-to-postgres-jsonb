@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const util = require('./util.js')
 const convertWhere = require('./index.js')
 
@@ -7,7 +6,7 @@ function convertOp(input, op, data, fieldName, upsert) {
   const value = data[pathText]
   delete data[pathText]
   if (Object.keys(data).length > 0) {
-    input = convertOp(input, op, data, fieldName, upsert)
+    input = convertOp(input, op, Object.assign({}, data), fieldName, upsert)
   }
   const path = pathText.split('.')
   const pgPath = util.toPostgresPath(path)
@@ -26,7 +25,7 @@ function convertOp(input, op, data, fieldName, upsert) {
           }
         }
       }
-      if (_.last(path) === '_id' && !upsert) {
+      if (path[path.length - 1] === '_id' && !upsert) {
         throw new Error('Mod on _id not allowed')
       }
       return 'jsonb_set(' + input + ',' + pgPath + ',' + util.quote2(value) + ')'
@@ -78,13 +77,13 @@ var convert = function (fieldName, update, upsert) {
   let keys = Object.keys(update)
   // $set needs to happen first
   if (keys.includes('$set')) {
-    keys = ['$set'].concat(_.pull(keys, '$set'))
+    keys = ['$set'].concat(keys.filter((v) => v !== '$set'))
   }
   keys.forEach(function(key) {
     if (!util.updateSpecialKeys.includes(key)) {
       throw new Error('The <update> document must contain only update operator expressions.')
     }
-    output = convertOp(output, key, _.cloneDeep(update[key]), fieldName, upsert)
+    output = convertOp(output, key, Object.assign({}, update[key]), fieldName, upsert)
   })
   return output
 }

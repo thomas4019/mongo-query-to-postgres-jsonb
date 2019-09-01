@@ -23,6 +23,9 @@ describe('update: ', function() {
     it('$set deep', function() {
       assert.equal(convertUpdate('data', { $set: { 'a.b': 2 } }), 'jsonb_set(jsonb_set(data,\'{a}\',COALESCE(data->\'a\', \'{}\'::jsonb)),\'{a,b}\',\'2\'::jsonb)')
     })
+    it('$set fails for _id', function() {
+      assert.throws(() => convertUpdate('data', { $set: { _id: 'b' } }), 'Mod on _id not allowed')
+    })
 
     it('$unset', function() {
       assert.equal(convertUpdate('data', { $unset: { field: 'value' } }), 'data #- \'{field}\'')
