@@ -133,6 +133,9 @@ describe('regular expressions', function() {
   it('js RegExp using regex', function () {
     assert.equal('data->>\'type\' ~ \'(?p)food\'', convert('data', { type: { $regex: /food/ }}))
   })
+  it('js RegExp using regex with options case insensitive', function () {
+    assert.equal('data->>\'type\' ~* \'(?p)food\'', convert('data', { type: { $regex : /food/, $options: 'i' } }))
+  })
   it('make dot match multiline', function () {
     assert.equal('data->>\'type\' ~* \'food\'', convert('data', { type: { $regex : 'food', $options: 'si' } }))
   })

@@ -121,10 +121,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
         // partial newline-sensitive matching
         op2 += '(?p)'
       }
-      if (value instanceof RegExp) {
-        value = value.source
-      }
-      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value) + '\''
+      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(typeof value === 'string' ? value : value.source) + '\''
     case '$eq':
     case '$gt':
     case '$gte':
