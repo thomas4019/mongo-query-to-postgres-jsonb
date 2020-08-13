@@ -127,8 +127,11 @@ describe('regular expressions', function() {
   it('case insensitive', function () {
     assert.equal('data->>\'type\' ~* \'(?p)food\'', convert('data', { type: { $regex : 'food', $options: 'i' } }))
   })
-  it('js regex', function () {
+  it('js RegExp', function () {
     assert.equal('data->>\'type\' ~ \'food\'', convert('data', { type: /food/ }))
+  })
+  it('js RegExp using regex', function () {
+    assert.equal('data->>\'type\' ~ \'(?p)food\'', convert('data', { type: { $regex: /food/ }}))
   })
   it('make dot match multiline', function () {
     assert.equal('data->>\'type\' ~* \'food\'', convert('data', { type: { $regex : 'food', $options: 'si' } }))

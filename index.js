@@ -118,9 +118,13 @@ function convertOp(path, op, value, parent, arrayPaths) {
         op += '*'
       }
       if (!parent['$options'] || !parent['$options'].includes('s')) {
+        // partial newline-sensitive matching
         op2 += '(?p)'
       }
-      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value.source) + '\''
+      if (value instanceof RegExp) {
+        value = value.source
+      }
+      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value) + '\''
     case '$eq':
     case '$gt':
     case '$gte':
