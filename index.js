@@ -120,7 +120,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
       if (!parent['$options'] || !parent['$options'].includes('s')) {
         op2 += '(?p)'
       }
-      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value) + '\''
+      return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value.source) + '\''
     case '$eq':
     case '$gt':
     case '$gte':
