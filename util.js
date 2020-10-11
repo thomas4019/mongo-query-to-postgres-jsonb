@@ -46,7 +46,7 @@ exports.toPostgresPath = function(path) {
 }
 
 exports.toNumeric = function(path) {
-  return 'Cast(' + path + ' as numeric)'
+  return 'COALESCE(Cast(' + path + ' as numeric),0)'
 }
 
 const typeMapping = {
