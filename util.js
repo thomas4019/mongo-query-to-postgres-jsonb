@@ -37,6 +37,18 @@ exports.pathToText = function(path, isString) {
   return text
 }
 
+exports.pathToObject = function(path) {
+  if (path.length === 1) {
+    if (typeof path[0] == 'string') {
+      return `"${path[0]}"`
+    } else {
+      return path[0]
+    }
+  }
+  const [head, ...tail] = path
+  return `'{ "${head}": ${exports.pathToObject(tail)} }'`
+}
+
 exports.convertDotNotation = function(path, pathDotNotation) {
   return exports.pathToText([path].concat(pathDotNotation.split('.')), true)
 }

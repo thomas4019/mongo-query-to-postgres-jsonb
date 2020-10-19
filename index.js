@@ -125,14 +125,16 @@ function convertOp(path, op, value, parent, arrayPaths) {
         value = value.source
       }
       return util.pathToText(path, true) + ' ' + op + ' \'' + op2 + util.stringEscape(value) + '\''
-    case '$eq':
     case '$gt':
     case '$gte':
     case '$lt':
     case '$lte':
-    case '$ne':
       var text = util.pathToText(path, typeof value == 'string')
       return text + ops[op] + util.quote(value)
+    case '$ne':
+    case '$eq':
+      const [head, ...tail] = path
+      return `${op=='$ne' ? 'NOT ' : ''}${head} @> ` + util.pathToObject([...tail, value])
     case '$type':
       var text = util.pathToText(path, false)
       const type = util.getPostgresTypeName(value)

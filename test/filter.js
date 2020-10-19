@@ -101,10 +101,10 @@ describe('$not', function () {
 
 describe('comparision operators', function() {
   it('$eq', function () {
-    assert.equal('data->>\'type\'=\'food\'', convert('data', { type: { $eq : 'food' } }))
+    assert.equal('data @> \'{ "type": "food" }\'', convert('data', { type: { $eq : 'food' } }))
   })
   it('$ne', function () {
-    assert.equal('data->>\'type\' IS DISTINCT FROM \'food\'', convert('data', { type: { $ne : 'food' } }))
+    assert.equal('NOT data @> \'{ "type": "food" }\'', convert('data', { type: { $ne : 'food' } }))
   })
   it('$gt', function () {
     assert.equal('data->\'count\'>\'5\'::jsonb', convert('data', { count: { $gt : 5 } }))
