@@ -32,12 +32,16 @@ function convertOp(input, op, data, fieldName, upsert) {
     case '$unset':
       return input + ' #- ' + pgPath
     case '$inc':
+      // TODO: Handle null value keys (MongoDB drops the operation with "Cannot apply $inc to a value of non-numeric type null")
       return 'jsonb_set(' + input + ',' + pgPath + ',to_jsonb(' + prevNumericVal + '+' + value + '))'
     case '$mul':
-      return 'jsonb_set(' + input + ',' + pgPath + ',to_jsonb(' + prevNumericVal + '*' + value + '))'
+      // TODO: Handle null value keys (MongoDB drops the operation with "Cannot apply $mul to a value of non-numeric type null")
+      return 'jsonb_set(' + input + ',' + pgPath + ',to_jsonb(' + prevNumericVal + '*' + value + '),TRUE)'
     case '$min':
+      // TODO: $min between existing key with value null with anything will output null
       return 'jsonb_set(' + input + ',' + pgPath + ',to_jsonb(LEAST(' + prevNumericVal + ',' + value + ')))'
     case '$max':
+      // TODO: $max between existing key with value null with anything will output value
       return 'jsonb_set(' + input + ',' + pgPath + ',to_jsonb(GREATEST(' + prevNumericVal + ',' + value + ')))'
     case '$rename':
       const pgNewPath = util.toPostgresPath(value.split('.'))

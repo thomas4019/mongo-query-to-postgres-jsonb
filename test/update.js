@@ -38,18 +38,18 @@ describe('update: ', function() {
     })
 
     it('$inc', function() {
-      assert.equal(convertUpdate('data', { $inc: { count: 2 } }), 'jsonb_set(data,\'{count}\',to_jsonb(Cast(data->>\'count\' as numeric)+2))')
+      assert.equal(convertUpdate('data', { $inc: { count: 2 } }), 'jsonb_set(data,\'{count}\',to_jsonb(COALESCE(Cast(data->>\'count\' as numeric),0)+2))')
     })
     it('$mul', function() {
-      assert.equal(convertUpdate('data', { $mul: { count: 2 } }), 'jsonb_set(data,\'{count}\',to_jsonb(Cast(data->>\'count\' as numeric)*2))')
+      assert.equal(convertUpdate('data', { $mul: { count: 2 } }), 'jsonb_set(data,\'{count}\',to_jsonb(COALESCE(Cast(data->>\'count\' as numeric),0)*2),TRUE)')
     })
 
 
     it('$min', function() {
-      assert.equal(convertUpdate('data', { $min: { count: 5 } }), 'jsonb_set(data,\'{count}\',to_jsonb(LEAST(Cast(data->>\'count\' as numeric),5)))')
+      assert.equal(convertUpdate('data', { $min: { count: 5 } }), 'jsonb_set(data,\'{count}\',to_jsonb(LEAST(COALESCE(Cast(data->>\'count\' as numeric),0),5)))')
     })
     it('$max', function() {
-      assert.equal(convertUpdate('data', { $max: { count: 5 } }), 'jsonb_set(data,\'{count}\',to_jsonb(GREATEST(Cast(data->>\'count\' as numeric),5)))')
+      assert.equal(convertUpdate('data', { $max: { count: 5 } }), 'jsonb_set(data,\'{count}\',to_jsonb(GREATEST(COALESCE(Cast(data->>\'count\' as numeric),0),5)))')
     })
 
     it('$rename', function() {
@@ -67,6 +67,11 @@ describe('update: ', function() {
   })
 
   describe('combined operators', function() {
-    assert.equal(convertUpdate('data', { $set: { active: true }, $inc: { purchases: 2 } }), 'jsonb_set(jsonb_set(data,\'{active}\',\'true\'::jsonb),\'{purchases}\',to_jsonb(Cast(data->>\'purchases\' as numeric)+2))')
+    it('$set,$inc', function() {
+      assert.equal(convertUpdate('data', { $set: { active: true }, $inc: { purchases: 2 } }), 'jsonb_set(jsonb_set(data,\'{active}\',\'true\'::jsonb),\'{purchases}\',to_jsonb(COALESCE(Cast(data->>\'purchases\' as numeric),0)+2))')
+    })
+    it('$set,$unset,$inc', function() {
+      assert.equal(convertUpdate('data', { $set: { active: true }, $unset: { field: 'value' }, $inc: { purchases: 2 } }), 'jsonb_set(jsonb_set(data,\'{active}\',\'true\'::jsonb) #- \'{field}\',\'{purchases}\',to_jsonb(COALESCE(Cast(data->>\'purchases\' as numeric),0)+2))')
+    })
   })
 })
