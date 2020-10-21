@@ -39,6 +39,13 @@ exports.pathToText = function(path, isString) {
 
 exports.pathToObject = function(path) {
   if (path.length === 1) {
+    return exports.quote2(path[0])
+  }
+  return "'" + exports.pathToObjectHelper(path) + "'"
+}
+
+exports.pathToObjectHelper = function(path) {
+  if (path.length === 1) {
     if (typeof path[0] == 'string') {
       return `"${path[0]}"`
     } else {
@@ -46,7 +53,7 @@ exports.pathToObject = function(path) {
     }
   }
   const [head, ...tail] = path
-  return `'{ "${head}": ${exports.pathToObject(tail)} }'`
+  return `{ "${head}": ${exports.pathToObjectHelper(tail)} }`
 }
 
 exports.convertDotNotation = function(path, pathDotNotation) {

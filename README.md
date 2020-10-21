@@ -70,7 +70,8 @@ Cast strings to number when sorting.
 
 | Languages  | MongoDB                       |  Postgres                                                                       |
 |------------|-------------------------------|---------------------------------------------------------------------------------|
-| Where      | { 'address.city': 'provo' }   |  (data->'address'->>'city' = 'provo')                                           |
+| Where      | { 'names.0': 'thomas' }       |  (data->'names'->>0 = 'thomas')                                                 |
+| Where      | { 'address.city': 'provo' }   |  data @> { "address": '{ "city": "provo" }' }                                   |
 | Where      | { $or: [ { qty: { $gt: 100 } }, { price: { $lt: 9.95 } } ] } |  ((data->'qty'>'100'::jsonb) OR (data->'price'<'9.95'::jsonb))   |
 | Projection | { field: 1 }                  |  jsonb_build_object('field', data->'field', '_id', data->'_id')'                |
 | Update     | { $set: { active: true } }    |  jsonb_set(data,'{active}','true'::jsonb)                                       |

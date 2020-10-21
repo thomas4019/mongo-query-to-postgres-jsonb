@@ -129,12 +129,19 @@ function convertOp(path, op, value, parent, arrayPaths) {
     case '$gte':
     case '$lt':
     case '$lte':
-      var text = util.pathToText(path, typeof value == 'string')
-      return text + ops[op] + util.quote(value)
     case '$ne':
     case '$eq':
-      const [head, ...tail] = path
-      return `${op=='$ne' ? 'NOT ' : ''}${head} @> ` + util.pathToObject([...tail, value])
+      const isSimpleComparision = (op === '$eq' || op === '$ne')
+      const pathContainsArrayAccess = path.some((key) => /^\d+$/.test(key))
+      if (isSimpleComparision && !pathContainsArrayAccess) {
+        // create containment query since these can use GIN indexes
+        // See docs here, https://www.postgresql.org/docs/9.4/datatype-json.html#JSON-INDEXING
+        const [head, ...tail] = path
+        return `${op=='$ne' ? 'NOT ' : ''}${head} @> ` + util.pathToObject([...tail, value])
+      } else {
+        var text = util.pathToText(path, typeof value == 'string')
+        return text + ops[op] + util.quote(value)
+      }
     case '$type':
       var text = util.pathToText(path, false)
       const type = util.getPostgresTypeName(value)
@@ -175,8 +182,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
  */
 var convert = function (path, query, arrayPaths, forceExact=false) {
   if (typeof query === 'string' || typeof query === 'boolean' || typeof query == 'number' || Array.isArray(query)) {
-    var text = util.pathToText(path, typeof query == 'string')
-    return text + '=' + util.quote(query)
+    return convertOp(path, '$eq', query, {}, arrayPaths)
   }
   if (query === null) {
     var text = util.pathToText(path, false)

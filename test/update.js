@@ -56,7 +56,7 @@ describe('update: ', function() {
       assert.equal(convertUpdate('data', { $rename: { current: 'newN' } }), 'jsonb_set(data,\'{newN}\',data->\'current\') #- \'{current}\'')
     })
     it('$pull', function() {
-      assert.equal(convertUpdate('data', { $pull: { cities: 'LA' } }), 'jsonb_set(data,\'{cities}\',to_jsonb(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\') WHERE NOT value #>>\'{}\'=\'LA\')))')
+      assert.equal(convertUpdate('data', { $pull: { cities: 'LA' } }), 'jsonb_set(data,\'{cities}\',to_jsonb(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\') WHERE NOT value @> \'"LA"\')))')
     })
     it('$push', function() {
       assert.equal(convertUpdate('data', { $push: { cities: 'LA' } }), 'jsonb_set(data,\'{cities}\',to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(data->\'cities\')),\'"LA"\')))')
