@@ -83,9 +83,12 @@ Cast strings to number when sorting.
 * [Mongo Docs](https://docs.mongodb.org/manual/tutorial/query-documents/#match-a-field-without-specifying-array-index)
 
 With MongoDB, you can search a document with a subarray of objects that you want to match when any one of the elements in the array matches.
-This tools implements it in SQL using a subquery so it is not be the most efficient.
+This tool implements it in SQL using a subquery, so it will likely not be the efficient on large datasets.
 
-Example document.
+To enable subfield matching, you can pass a third parameter which is either an array of field names that will be assumed
+to potentially be arrays or `true` if you want it to assume any field can be an array.
+
+Example document:
 ```js
 {
   "courses": [{
@@ -95,9 +98,17 @@ Example document.
     }]
 ]
 ```
-Example query to match:
+Example queries to match:
 ```js
 mongoToPostgres('data', { 'courses.distance': '5K' }, ['courses'])
+mongoToPostgres('data', { 'courses.distance': '5K' }, true)
+```
+
+This then creates a PostgreSQL query like the following:
+```
+(data->'courses'->>'distance'='5K'
+OR EXISTS (SELECT * FROM jsonb_array_elements(data->'courses')
+           WHERE jsonb_typeof(data->'courses')='array' AND value->>'distance'='5K'))
 ```
     
 ## Supported Features
