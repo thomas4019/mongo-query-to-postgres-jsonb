@@ -43,17 +43,20 @@ function convertOp(input, op, data, fieldName, upsert) {
     case '$max':
       // TODO: $max between existing key with value null with anything will output value
       return 'jsonb_set(' + input + ',' + pgPath + ',to_jsonb(GREATEST(' + prevNumericVal + ',' + value + ')))'
-    case '$rename':
+    case '$rename': {
       const pgNewPath = util.toPostgresPath(value.split('.'))
       return 'jsonb_set(' + input + ',' + pgNewPath + ',' + pgQueryPath + ') #- ' + pgPath
-    case '$pull':
+    }
+    case '$pull': {
       const newArray = 'to_jsonb(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ') WHERE NOT ' + convertWhere('value', value, upsert) + '))'
       return 'jsonb_set(' + input + ',' + pgPath + ',' + newArray + ')'
-    case '$pullAll':
+    }
+    case '$pullAll': {
       const pullValues = '(' + value.map((v) => util.quote2(v)).join(',') + ')'
       const newArray2 = 'to_jsonb(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ') WHERE value NOT IN ' + pullValues + '))'
       return 'jsonb_set(' + input + ',' + pgPath + ',' + newArray2 + ')'
-    case '$push':
+    }
+    case '$push': {
       const v2 = util.quote2(value)
       if (upsert) {
         const newArray = 'jsonb_build_array(' + v2 + ')'
@@ -61,7 +64,8 @@ function convertOp(input, op, data, fieldName, upsert) {
       }
       const updatedArray2 = 'to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ')),' + v2 + '))'
       return 'jsonb_set(' + input + ',' + pgPath + ',' + updatedArray2 + ')'
-    case '$addToSet':
+    }
+    case '$addToSet': {
       const v = util.quote2(value)
       if (upsert) {
         const newArray = 'jsonb_build_array(' + v + ')'
@@ -69,6 +73,7 @@ function convertOp(input, op, data, fieldName, upsert) {
       }
       const updatedArray = 'to_jsonb(array_append(ARRAY(SELECT value FROM jsonb_array_elements(' + pgQueryPath + ') WHERE value != ' + v + '),' + v + '))'
       return 'jsonb_set(' + input + ',' + pgPath + ',' + updatedArray + ')'
+    }
   }
 }
 

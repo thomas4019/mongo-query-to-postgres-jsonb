@@ -41,7 +41,7 @@ exports.pathToObject = function(path) {
   if (path.length === 1) {
     return exports.quote2(path[0])
   }
-  return "'" + exports.pathToObjectHelper(path) + "'"
+  return '\'' + exports.pathToObjectHelper(path) + '\''
 }
 
 exports.pathToObjectHelper = function(path) {
