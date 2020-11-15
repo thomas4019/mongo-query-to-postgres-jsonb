@@ -15,7 +15,7 @@ var otherOps = {
   $all: true, $in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true, $regex: true, $type: true, $size: true, $exists: true, $mod: true, $text: true
 }
 
-function shouldQueryAsArray(op, arrayPaths) {
+function getMatchingArrayPath(op, arrayPaths) {
   if (arrayPaths === true) {
     // always assume array path if true is passed
     return true
@@ -23,16 +23,29 @@ function shouldQueryAsArray(op, arrayPaths) {
   if (!arrayPaths || !Array.isArray(arrayPaths)) {
     return false
   }
-  return arrayPaths.some(op => op.startsWith(arrayPaths))
+  return arrayPaths.find(path => op.startsWith(path))
 }
 
-function createElementOrArrayQuery(path, op, value, parent) {
-  const subPath = op.split('.')
-  const innerPath = subPath.length > 1 ? ['value', subPath.pop()] : ['value']
+/**
+ * @param path array path current key
+ * @param op current key, might be a dotted path
+ * @param value
+ * @param parent
+ * @param arrayPathStr
+ * @returns {string|string|*}
+ */
+function createElementOrArrayQuery(path, op, value, parent, arrayPathStr) {
+  const arrayPath = arrayPathStr.split('.')
+  const deeperPath = op.split('.').slice(arrayPath.length)
+  const innerPath = ['value', ...deeperPath]
+  const pathToMaybeArray = path.concat(arrayPath)
+
+  // TODO: nested array paths are not yet supported.
   const singleElementQuery = convertOp(path, op, value, parent, [])
-  path = path.concat(subPath)
-  const text = util.pathToText(path, false)
+
+  const text = util.pathToText(pathToMaybeArray, false)
   const safeArray = `jsonb_typeof(${text})='array' AND`
+
   let arrayQuery = ''
   if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
     if (typeof value['$size'] !== 'undefined') {
@@ -75,8 +88,9 @@ function createElementOrArrayQuery(path, op, value, parent) {
  * @param arrayPaths {Array} List of dotted paths that possibly need to be handled as arrays.
  */
 function convertOp(path, op, value, parent, arrayPaths) {
-  if (shouldQueryAsArray(op, arrayPaths)) {
-    return createElementOrArrayQuery(path, op, value, parent)
+  const arrayPath = getMatchingArrayPath(op, arrayPaths)
+  if (arrayPath) {
+    return createElementOrArrayQuery(path, op, value, parent, arrayPath)
   }
   switch(op) {
     case '$not':

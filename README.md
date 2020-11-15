@@ -85,7 +85,7 @@ Cast strings to number when sorting.
 With MongoDB, you can search a document with a subarray of objects that you want to match when any one of the elements in the array matches.
 This tool implements it in SQL using a subquery, so it will likely not be the efficient on large datasets.
 
-To enable subfield matching, you can pass a third parameter which is either an array of field names that will be assumed
+To enable subfield matching, you can pass a third parameter which is either an array of dotted paths that will be assumed
 to potentially be arrays or `true` if you want it to assume any field can be an array.
 
 Example document:
@@ -110,6 +110,9 @@ This then creates a PostgreSQL query like the following:
 OR EXISTS (SELECT * FROM jsonb_array_elements(data->'courses')
            WHERE jsonb_typeof(data->'courses')='array' AND value->>'distance'='5K'))
 ```
+
+Note: nested paths are not yet supported, so passing ['courses', 'courses.distance'] won't support checking both.
+The first matching path is the one that will be used.
     
 ## Supported Features
 * $eq, $gt, $gte, $lt, $lte, $ne
