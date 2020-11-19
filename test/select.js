@@ -20,6 +20,9 @@ describe('select: ', function() {
     it('nested field', function () {
       assert.equal(convertSelect('data', { 'field.inner': 1 }), 'jsonb_build_object(\'field\', jsonb_build_object(\'inner\', data->\'field\'->\'inner\'), \'_id\', data->\'_id\') as data')
     })
+    it('nested field alternate', function () {
+      assert.equal(convertSelect('data', { field: { inner: 1 } }), 'jsonb_build_object(\'field\', jsonb_build_object(\'inner\', data->\'field\'->\'inner\'), \'_id\', data->\'_id\') as data')
+    })
     it('multiple fields', function () {
       assert.equal(convertSelect('data', { a: 1, b: 1 }), 'jsonb_build_object(\'a\', data->\'a\', \'b\', data->\'b\', \'_id\', data->\'_id\') as data')
     })
@@ -37,6 +40,15 @@ describe('select: ', function() {
     })
     it('combined exclusion and inclusion', function () {
       assert.throws(() => convertSelect('data', { a: 1, b: 0 }), 'Projection cannot have a mix of inclusion and exclusion.')
+    })
+  })
+
+  describe('array fields', function () {
+    it('single field', function () {
+      assert.equal(convertSelect('data', { 'arr.color': 1 }, { arr: 1 }),
+        'jsonb_build_object(\'arr\', (SELECT jsonb_agg(r) FROM (SELECT jsonb_build_object(' +
+          '\'color\', value->\'color\') as r FROM jsonb_array_elements(data->\'arr\') as value)' +
+          ' AS obj), \'_id\', data->\'_id\') as data')
     })
   })
 })

@@ -1,24 +1,26 @@
 var util = require('./util.js')
 
-function convertRecur(fieldName, input) {
+// TODO (ensure multi-level inside array projections work)
+function convertRecur(fieldName, input, arrayFields, prefix, prefixStrip) {
   if (typeof input === 'string') {
-    return util.pathToText([fieldName].concat(input.split('.')), false)
+    return util.pathToText([fieldName].concat(input.replace(new RegExp('^' + prefixStrip), '').split('.')), false)
   } else {
     var entries = []
     for (var key in input) {
       entries.push('\'' + key + '\'')
-      entries.push(convertRecur(fieldName, input[key]))
+      if (!arrayFields[key]) {
+        entries.push(convertRecur(fieldName, input[key], arrayFields[key] || {}, prefix + key + '.' , prefixStrip))
+      } else {
+        const obj = convertRecur('value', input[key], arrayFields[key] || {}, prefix + key + '.', prefix + key + '.')
+        entries.push('(SELECT jsonb_agg(r) FROM (SELECT ' + obj + ' as r '  +
+          'FROM jsonb_array_elements(data->\'arr\') as value) AS obj)')
+      }
     }
     return 'jsonb_build_object(' + entries.join(', ') + ')'
   }
 }
 
-var convert = function (fieldName, projection) {
-  // Empty projection returns full document
-  if (!projection) {
-    return fieldName
-  }
-  //var output = '';
+function convertToShellDoc(projection, prefix = '') {
   var shellDoc = {}
   var removals = []
   Object.keys(projection).forEach(function(field) {
@@ -31,19 +33,35 @@ var convert = function (fieldName, projection) {
           current[key] = current[key] || {}
           current = current[key]
         } else {
-          current[key] = field
+          current[key] = prefix + field
         }
       }
     } else if (projection[field] === 0) {
       if (field !== '_id') {
         removals.push('#- ' + util.toPostgresPath(path))
       }
+    } else if (typeof projection[field] === 'object' && !Array.isArray(projection[field])) {
+      const { shellDoc: subShellDoc, removals: subRemovals } =
+          convertToShellDoc(projection[field], prefix + field +  '.')
+      shellDoc[field] = subShellDoc
+      removals = removals.concat(subRemovals)
     } else {
       console.error(`unexpected projection value ${projection[field]} for ${field}`)
     }
-    //output += util.convertDotNotation(fieldName, field)
-    //output +=
   })
+  return { shellDoc, removals }
+}
+
+var convert = function (fieldName, projection, arrayFields) {
+  // Empty projection returns full document
+  if (!projection) {
+    return fieldName
+  }
+  //var output = '';
+  let { shellDoc, removals } = convertToShellDoc(projection)
+
+  //output += util.convertDotNotation(fieldName, field)
+  //output +=
   if (Object.keys(shellDoc).length > 0 && typeof projection['_id'] === 'undefined') {
     shellDoc['_id'] = '_id'
   }
@@ -54,7 +72,7 @@ var convert = function (fieldName, projection) {
     throw new Error('Projection cannot have a mix of inclusion and exclusion.')
   }
 
-  var out = Object.keys(shellDoc).length > 0 ? convertRecur(fieldName, shellDoc) : fieldName
+  var out = Object.keys(shellDoc).length > 0 ? convertRecur(fieldName, shellDoc, arrayFields || {}, '', '') : fieldName
   if (removals.length) {
     out += ' ' + removals.join(' ')
   }
