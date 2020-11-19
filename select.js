@@ -1,5 +1,18 @@
 var util = require('./util.js')
 
+function convertRecur(fieldName, input) {
+  if (typeof input === 'string') {
+    return util.pathToText([fieldName].concat(input.split('.')), false)
+  } else {
+    var entries = []
+    for (var key in input) {
+      entries.push('\'' + key + '\'')
+      entries.push(convertRecur(fieldName, input[key]))
+    }
+    return 'jsonb_build_object(' + entries.join(', ') + ')'
+  }
+}
+
 var convert = function (fieldName, projection) {
   // Empty projection returns full document
   if (!projection) {
@@ -40,24 +53,13 @@ var convert = function (fieldName, projection) {
   if (removals.length > 0 && Object.keys(shellDoc).length > 0) {
     throw new Error('Projection cannot have a mix of inclusion and exclusion.')
   }
-  function convertRecur(input) {
-    if (typeof input === 'string') {
-      return util.pathToText([fieldName].concat(input.split('.')), false)
-    } else {
-      var entries = []
-      for (var key in input) {
-        entries.push('\'' + key + '\'')
-        entries.push(convertRecur(input[key]))
-      }
-      return 'jsonb_build_object(' + entries.join(', ') + ')'
-    }
-  }
-  var out = Object.keys(shellDoc).length > 0 ? convertRecur(shellDoc) : fieldName
+
+  var out = Object.keys(shellDoc).length > 0 ? convertRecur(fieldName, shellDoc) : fieldName
   if (removals.length) {
     out += ' ' + removals.join(' ')
   }
   if (out === fieldName){
-    return fieldName
+    return out
   }
   return out + ' as ' + fieldName
 }

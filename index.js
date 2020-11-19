@@ -2,7 +2,7 @@ const util = require('./util.js')
 
 // These are the simple operators.
 // Note that "is distinct from" needs to be used to ensure nulls are returned as expected, see https://modern-sql.com/feature/is-distinct-from
-var ops = {
+const OPS = {
   $eq: '=',
   $gt: '>',
   $gte: '>=',
@@ -11,7 +11,7 @@ var ops = {
   $ne: ' IS DISTINCT FROM ',
 }
 
-var otherOps = {
+const OTHER_OPS = {
   $all: true, $in: true, $nin: true, $not: true, $or: true, $and: true, $elemMatch: true, $regex: true, $type: true, $size: true, $exists: true, $mod: true, $text: true
 }
 
@@ -47,6 +47,7 @@ function createElementOrArrayQuery(path, op, value, parent, arrayPathStr) {
   const safeArray = `jsonb_typeof(${text})='array' AND`
 
   let arrayQuery = ''
+  const specialKeys = getSpecialKeys(path, value, true)
   if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
     if (typeof value['$size'] !== 'undefined') {
       // size does not support array element based matching
@@ -63,6 +64,9 @@ function createElementOrArrayQuery(path, op, value, parent, arrayPathStr) {
         const sub = convert(innerPath, subquery, [], false)
         return `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
       }).join(' AND ') + ')'
+    } else if (specialKeys.length === 0) {
+      const sub = convert(innerPath, value, [], true)
+      arrayQuery = `EXISTS (SELECT * FROM jsonb_array_elements(${text}) WHERE ${safeArray} ${sub})`
     } else {
       const params = value
       arrayQuery = '(' + Object.keys(params).map(function (subKey) {
@@ -172,7 +176,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
         return `${op=='$ne' ? 'NOT ' : ''}${head} @> ` + util.pathToObject([...tail, value])
       } else {
         var text = util.pathToText(path, typeof value == 'string')
-        return text + ops[op] + util.quote(value)
+        return text + OPS[op] + util.quote(value)
       }
     }
     case '$type': {
@@ -209,6 +213,12 @@ function convertOp(path, op, value, parent, arrayPaths) {
   }
 }
 
+function getSpecialKeys(path, query, forceExact) {
+  return Object.keys(query).filter(function (key) {
+    return (path.length === 1 && !forceExact) || key in OPS || key in OTHER_OPS
+  })
+}
+
 /**
  * Convert a filter expression to the corresponding PostgreSQL text.
  * @param path {Array} The current path
@@ -234,9 +244,7 @@ var convert = function (path, query, arrayPaths, forceExact=false) {
     if (Object.keys(query).length === 0) {
       return 'TRUE'
     }
-    var specialKeys = Object.keys(query).filter(function (key) {
-      return (path.length === 1 && !forceExact) || key in ops || key in otherOps
-    })
+    const specialKeys = getSpecialKeys(path, query, forceExact)
     switch (specialKeys.length) {
       case 0: {
         const text = util.pathToText(path, typeof query == 'string')

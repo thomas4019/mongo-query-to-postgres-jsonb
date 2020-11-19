@@ -194,6 +194,12 @@ describe('Match a Field Without Specifying Array Index', function () {
         '(data->\'courses\') WHERE jsonb_typeof(data->\'courses\')=\'array\' AND value @> \'{ "distance": "5K" }\'))',
     convert('data', { 'courses.distance': '5K' }, ['courses', 'other']))
   })
+  it('basic case matching object', function() {
+    assert.equal('(data->\'courses\'=\'{"distance":"5K","loop":true}\'::jsonb OR EXISTS (SELECT * FROM' +
+        ' jsonb_array_elements(data->\'courses\') WHERE jsonb_typeof(data->\'courses\')=\'array\' AND' +
+        ' value=\'{"distance":"5K","loop":true}\'::jsonb))',
+    convert('data', { 'courses': { distance: '5K', loop: true } }, ['courses']))
+  })
   it('basic deep case', function() {
     assert.equal('(data @> \'{ "courses": { "distance": "5K" } }\' OR EXISTS (SELECT * FROM jsonb_array_elements' +
         '(data->\'courses\'->\'distance\') WHERE jsonb_typeof(data->\'courses\'->\'distance\')=\'array\' AND value @> \'"5K"\'))',
