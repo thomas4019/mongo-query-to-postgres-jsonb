@@ -40,7 +40,7 @@ An object containing MongoDB [query operators](https://docs.mongodb.com/manual/r
 
 This tool doesn't know which fields are arrays so you can optionally specify a list of dotted paths which should be treated as an array.
 
-### mToPsql.convertSelect(sqlField, projectionQuery)
+### mToPsql.convertSelect(sqlField, projectionQuery, [arrayFields])
 
 #### projectionQuery
 
