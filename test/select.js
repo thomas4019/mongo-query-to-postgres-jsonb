@@ -38,6 +38,9 @@ describe('select: ', function() {
     it('exclude deep', function () {
       assert.equal(convertSelect('data', { 'field.inner': 0 }), 'data #- \'{field,inner}\' as data')
     })
+    it('exclude deep', function () {
+      assert.equal(convertSelect('data', { 'field.inner': 0 }), 'data #- \'{field,inner}\' as data')
+    })
     it('combined exclusion and inclusion', function () {
       assert.throws(() => convertSelect('data', { a: 1, b: 0 }), 'Projection cannot have a mix of inclusion and exclusion.')
     })
@@ -45,10 +48,18 @@ describe('select: ', function() {
 
   describe('array fields', function () {
     it('single field', function () {
-      assert.equal(convertSelect('data', { 'arr.color': 1 }, { arr: 1 }),
+      assert.equal(convertSelect('data', { 'arr.color': 1 }, ['arr']),
         'jsonb_build_object(\'arr\', (SELECT jsonb_agg(r) FROM (SELECT jsonb_build_object(' +
-          '\'color\', value->\'color\') as r FROM jsonb_array_elements(data->\'arr\') as value)' +
+          '\'color\', v->\'color\') as r FROM jsonb_array_elements(data->\'arr\') as v)' +
           ' AS obj), \'_id\', data->\'_id\') as data')
+    })
+
+    it('field within two nested arrays', function () {
+      assert.equal(convertSelect('data', { 'arr.subarr.color': 1 }, ['arr', 'arr.subarr']),
+        'jsonb_build_object(\'arr\', (SELECT jsonb_agg(r) FROM (SELECT jsonb_build_object(\'subarr\', ' +
+          '(SELECT jsonb_agg(r) FROM (SELECT jsonb_build_object(\'color\', v->\'color\') as r FROM ' +
+          'jsonb_array_elements(v->\'subarr\') as v) AS obj)) as r FROM jsonb_array_elements(data->\'arr\') ' +
+          'as v) AS obj), \'_id\', data->\'_id\') as data')
     })
   })
 })

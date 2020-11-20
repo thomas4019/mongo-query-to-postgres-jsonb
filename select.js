@@ -1,6 +1,5 @@
 var util = require('./util.js')
 
-// TODO (ensure multi-level inside array projections work)
 function convertRecur(fieldName, input, arrayFields, prefix, prefixStrip) {
   if (typeof input === 'string') {
     return util.pathToText([fieldName].concat(input.replace(new RegExp('^' + prefixStrip), '').split('.')), false)
@@ -8,12 +7,12 @@ function convertRecur(fieldName, input, arrayFields, prefix, prefixStrip) {
     var entries = []
     for (var key in input) {
       entries.push('\'' + key + '\'')
-      if (!arrayFields[key]) {
-        entries.push(convertRecur(fieldName, input[key], arrayFields[key] || {}, prefix + key + '.' , prefixStrip))
+      if (!arrayFields.includes(prefix + key)) {
+        entries.push(convertRecur(fieldName, input[key], arrayFields, prefix + key + '.' , prefixStrip))
       } else {
-        const obj = convertRecur('value', input[key], arrayFields[key] || {}, prefix + key + '.', prefix + key + '.')
-        entries.push('(SELECT jsonb_agg(r) FROM (SELECT ' + obj + ' as r '  +
-          'FROM jsonb_array_elements(data->\'arr\') as value) AS obj)')
+        const path = util.pathToText([fieldName].concat((prefix + key).replace(new RegExp('^' + prefixStrip), '').split('.')), false)
+        const obj = convertRecur('v', input[key], arrayFields, prefix + key + '.', prefix + key + '.')
+        entries.push(`(SELECT jsonb_agg(r) FROM (SELECT ${obj} as r FROM jsonb_array_elements(${path}) as v) AS obj)`)
       }
     }
     return 'jsonb_build_object(' + entries.join(', ') + ')'
@@ -52,16 +51,14 @@ function convertToShellDoc(projection, prefix = '') {
   return { shellDoc, removals }
 }
 
-var convert = function (fieldName, projection, arrayFields) {
+const convert = function (fieldName, projection, arrayFields) {
+  arrayFields = arrayFields || []
   // Empty projection returns full document
   if (!projection) {
     return fieldName
   }
-  //var output = '';
   let { shellDoc, removals } = convertToShellDoc(projection)
 
-  //output += util.convertDotNotation(fieldName, field)
-  //output +=
   if (Object.keys(shellDoc).length > 0 && typeof projection['_id'] === 'undefined') {
     shellDoc['_id'] = '_id'
   }
@@ -72,7 +69,7 @@ var convert = function (fieldName, projection, arrayFields) {
     throw new Error('Projection cannot have a mix of inclusion and exclusion.')
   }
 
-  var out = Object.keys(shellDoc).length > 0 ? convertRecur(fieldName, shellDoc, arrayFields || {}, '', '') : fieldName
+  let out = Object.keys(shellDoc).length > 0 ? convertRecur(fieldName, shellDoc, arrayFields, '', '') : fieldName
   if (removals.length) {
     out += ' ' + removals.join(' ')
   }
