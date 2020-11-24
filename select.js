@@ -7,7 +7,8 @@ function convertRecur(fieldName, input, arrayFields, prefix, prefixStrip) {
     var entries = []
     for (var key in input) {
       entries.push('\'' + key + '\'')
-      if (!arrayFields.includes(prefix + key)) {
+      const nestedArrayField = arrayFields.includes(prefix + key) && typeof input[key] === 'object'
+      if (!nestedArrayField) {
         entries.push(convertRecur(fieldName, input[key], arrayFields, prefix + key + '.' , prefixStrip))
       } else {
         const path = util.pathToText([fieldName].concat((prefix + key).replace(new RegExp('^' + prefixStrip), '').split('.')), false)
