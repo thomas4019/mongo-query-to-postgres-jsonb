@@ -49,7 +49,7 @@ describe('select: ', function() {
   describe('array fields', function () {
     it('nothing special when requesting array field itself', function () {
       assert.equal(convertSelect('data', { 'arr': 1 }, ['arr']),
-      "jsonb_build_object('arr', data->'arr', '_id', data->'_id') as data")
+        'jsonb_build_object(\'arr\', data->\'arr\', \'_id\', data->\'_id\') as data')
     })
 
     it('single field', function () {
