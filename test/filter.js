@@ -17,8 +17,14 @@ describe('string equality', function () {
 })
 
 describe('array equality', function () {
+  it('array match', function () {
+    assert.equal('data @> \'{ "roles": ["Admin"] }\'', convert('data', {'roles': ['Admin']}))
+  })
+  it('array match', function () {
+    assert.equal('data @> \'{ "roles": ["Admin","2"] }\'', convert('data', {'roles': ['Admin', '2']}))
+  })
   it('should use =', function () {
-    assert.equal('data @> \'{ "roles": Admin }\'', convert('data', {'roles': ['Admin']}))
+    assert.equal('data @> \'{ "roles": "Admin" }\'', convert('data', {'roles': 'Admin'}))
   })
   it('should matching numeric indexes', function() {
     assert.equal('data->\'roles\'->>0=\'Admin\'', convert('data', {'roles.0': 'Admin'}))
@@ -214,6 +220,17 @@ describe('Match a Field Without Specifying Array Index', function () {
     assert.equal('(data->>\'roles\' IN (\'Test\', \'Admin\') OR EXISTS (SELECT * FROM jsonb_array_elements(' +
         'data->\'roles\') WHERE jsonb_typeof(data->\'roles\')=\'array\' AND value #>>\'{}\' IN (\'Test\', \'Admin\')))',
     convert('data', { 'roles': { $in: ['Test', 'Admin'] } }, ['roles']))
+  })
+  it('$all', function() {
+    assert.equal('(data @> \'{ "roles": { "$all": ["Test","Admin"] } }\' OR (EXISTS (SELECT * ' +
+        'FROM jsonb_array_elements(data->\'roles\') WHERE jsonb_typeof(data->\'roles\')=\'array\' ' +
+        'AND value @> \'"Test"\') AND EXISTS (SELECT * FROM jsonb_array_elements(data->\'roles\') ' +
+        'WHERE jsonb_typeof(data->\'roles\')=\'array\' AND value @> \'"Admin"\')))',
+    convert('data', { 'roles': { $all: ['Test', 'Admin'] } }, ['roles']))
+  })
+  it('with another array', function() {
+    assert.equal('(data @> \'{ "roles": ["Test","Admin"] }\' OR EXISTS (SELECT * FROM jsonb_array_elements(data->\'roles\') WHERE jsonb_typeof(data->\'roles\')=\'array\' AND value @> \'["Test","Admin"]\'::jsonb))',
+      convert('data', { 'roles': ['Test', 'Admin'] }, ['roles']))
   })
 })
 describe('special cases', function () {

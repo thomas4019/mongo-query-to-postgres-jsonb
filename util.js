@@ -49,7 +49,7 @@ exports.pathToObjectHelper = function(path) {
     if (typeof path[0] == 'string') {
       return `"${path[0]}"`
     } else {
-      return path[0]
+      return JSON.stringify(path[0])
     }
   }
   const [head, ...tail] = path

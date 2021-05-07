@@ -93,6 +93,9 @@ function createElementOrArrayQuery(path, op, value, parent, arrayPathStr) {
  */
 function convertOp(path, op, value, parent, arrayPaths) {
   const arrayPath = getMatchingArrayPath(op, arrayPaths)
+  // It seems like direct matches shouldn't be array fields, but 2D arrays are possible in MongoDB
+  // I will need to do more testing to see if we should handle this case differently.
+  // const arrayDirectMatch = !isSpecialOp(op) && Array.isArray(value)
   if (arrayPath) {
     return createElementOrArrayQuery(path, op, value, parent, arrayPath)
   }
@@ -209,13 +212,19 @@ function convertOp(path, op, value, parent, arrayPaths) {
       return 'cast(' + text + ' AS numeric) % ' + value[0] + '=' + value[1]
     }
     default:
+      // this is likely a top level field, recurse
       return convert(path.concat(op.split('.')), value)
   }
 }
 
+function isSpecialOp(op) {
+  return op in OPS || op in OTHER_OPS
+}
+
+// top level keys are always special, since you never exact match the whole object
 function getSpecialKeys(path, query, forceExact) {
   return Object.keys(query).filter(function (key) {
-    return (path.length === 1 && !forceExact) || key in OPS || key in OTHER_OPS
+    return (path.length === 1 && !forceExact) || isSpecialOp(key)
   })
 }
 
