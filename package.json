@@ -1,16 +1,16 @@
 {
   "name": "mongo-query-to-postgres-jsonb",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Converts MongoDB queries to postgresql queries for jsonb fields.",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
-  "dependencies": {},
   "devDependencies": {
+    "browserify": "^17.0.0",
     "chai": "^4.2.0",
-    "mocha": "^8.1.1",
-    "eslint": "^7.1.0"
+    "eslint": "^7.1.0",
+    "mocha": "^8.1.1"
   },
   "repository": {
     "type": "git",
@@ -19,7 +19,8 @@
   "scripts": {
     "test": "mocha",
     "lint": "eslint .",
-    "fixlint": "eslint . --fix"
+    "fixlint": "eslint . --fix",
+    "browserbuild": "browserify main.js -o dist/m-to-psql.js"
   },
   "keywords": [
     "mongogdb",
