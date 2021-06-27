@@ -238,3 +238,10 @@ describe('special cases', function () {
     assert.equal('TRUE', convert('data', {}))
   })
 })
+
+describe('options.disableContainmentQuery', function () {
+  it('should use ->> operator instead of containment when options.disableContainmentQuery is passed', function (){
+    assert.equal('(data->>\'a\'=\'1111\' and data->\'b\'=\'123\'::jsonb)', 
+      convert('data', { a: '1111', b: 123 }, {disableContainmentQuery: true}))
+  })
+})
