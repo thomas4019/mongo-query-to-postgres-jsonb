@@ -13,6 +13,16 @@ describe('update: ', function() {
     })
   })
 
+  describe('escaping', function () {
+    it('simple quotes', function() {
+      assert.equal(convertUpdate('data', { $set: { message:'I\'m a string' } }), 'jsonb_set(data,\'{message}\',\'"I\'\'m a string"\')')
+    })
+
+    it('nested quotes', function() {
+      assert.equal(convertUpdate('data', { $set: { prop_1: { message:'I\'m a string' } } }), 'jsonb_set(data,\'{prop_1}\',\'{"message":"I\'\'m a string"}\'::jsonb)')
+    })
+  })
+
   describe('operators', function () {
     it('$set', function() {
       assert.equal(convertUpdate('data', { $set: { field: 'value' } }), 'jsonb_set(data,\'{field}\',\'"value"\')')

@@ -6,6 +6,13 @@ exports.countUpdateSpecialKeys = function(doc) {
   }).length
 }
 
+function quoteReplacer(key, value) {
+  if (typeof value == 'string') {
+    return exports.stringEscape(value)
+  }
+  return value
+}
+
 exports.quote = function(data) {
   if (typeof data == 'string')
     return '\'' + exports.stringEscape(data) + '\''
@@ -15,7 +22,7 @@ exports.quote = function(data) {
 exports.quote2 = function(data) {
   if (typeof data == 'string')
     return '\'"' + exports.stringEscape(data) + '"\''
-  return '\''+JSON.stringify(data)+'\'::jsonb'
+  return '\''+JSON.stringify(data, quoteReplacer)+'\'::jsonb'
 }
 
 exports.stringEscape = function(str) {
