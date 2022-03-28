@@ -93,3 +93,35 @@ exports.getPostgresTypeName = function(type) {
   }
   return typeMapping[type] || type
 }
+
+function isIntegerStrict(val) {
+  return val != 'NaN' && parseInt(val).toString() == val
+}
+
+exports.getPathSortedArray = function(keys) {
+  return keys.sort((a, b) => {
+    if (a == b) {
+      return 0
+    }
+
+    var aArr = a.split('.')
+    var bArr = b.split('.')
+
+    for (var i = 0; i < aArr.length; i++) {
+      if (i >= bArr.length) {
+        return -1
+      }
+
+      if (aArr[i] == bArr[i]) {
+        continue
+      }
+
+      var aItem = isIntegerStrict(aArr[i]) ? parseInt(aArr[i]) : aArr[i]
+      var bItem = isIntegerStrict(bArr[i]) ? parseInt(bArr[i]) : bArr[i]
+
+      return aItem > bItem ? -1 : 1
+    }
+
+    return 1
+  })
+}

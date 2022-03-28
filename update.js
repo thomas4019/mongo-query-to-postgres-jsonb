@@ -2,7 +2,7 @@ const util = require('./util.js')
 const convertWhere = require('./index.js')
 
 function convertOp(input, op, data, fieldName, upsert) {
-  const pathText = Object.keys(data)[0]
+  const pathText = util.getPathSortedArray(Object.keys(data))[0]
   const value = data[pathText]
   delete data[pathText]
   if (Object.keys(data).length > 0) {
