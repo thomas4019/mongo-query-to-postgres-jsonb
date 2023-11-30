@@ -132,16 +132,18 @@ function convertOp(path, op, value, parent, arrayPaths, options) {
       //return util.pathToText(path, false) + ' @> \'' + util.stringEscape(JSON.stringify(value)) + '\'::jsonb'
     case '$in':
     case '$nin': {
-      if (value.length === 0) {
-        return 'FALSE'
-      }
-      if (value.length === 1) {
-        return convert(path, value[0], arrayPaths, false, options)
-      }
       const cleanedValue = value.filter((v) => (v !== null && typeof v !== 'undefined'))
-      let partial = util.pathToText(path, typeof value[0] == 'string') + (op == '$nin' ? ' NOT' : '') + ' IN (' + cleanedValue.map(util.quote).join(', ') + ')'
+      let subject = util.pathToText(path, typeof value[0] == 'string')
+      if (cleanedValue.length === 0) {
+        if (op === '$in') {
+          return (value.length >= 1 ? `${subject} IS NULL` : 'FALSE')
+        } else {
+          return (value.length >= 1 ? `${subject} IS NOT NULL` : 'TRUE')
+        }
+      }
+      let partial = subject + (op == '$nin' ? ' NOT' : '') + ' IN (' + cleanedValue.map(util.quote).join(', ') + ')'
       if (value.length != cleanedValue.length) {
-        return (op === '$in' ? '(' + partial + ' OR IS NULL)' : '(' + partial + ' AND IS NOT NULL)'  )
+        return (op === '$in' ? `(${partial} ${subject} OR IS NULL)` : `(${partial} AND ${subject} IS NOT NULL)`  )
       }
       return partial
     }

@@ -79,20 +79,38 @@ describe('$and', function () {
 })
 
 describe('$in', function () {
+  it('should work with empty list', function () {
+    assert.equal('FALSE', convert('data', { type: { $in: [] } }))
+  })
   it('should work with strings', function () {
     assert.equal('data->>\'type\' IN (\'food\', \'snacks\')', convert('data', { type: { $in: [ 'food', 'snacks' ] } }))
   })
   it('should work with numbers', function () {
     assert.equal('data->\'count\' IN (\'1\'::jsonb, \'5\'::jsonb)', convert('data', { count: { $in: [ 1, 5 ] } }))
   })
+  it('should work with just null value', function () {
+    assert.equal('data->\'count\' IS NULL', convert('data', { count: { $in: [null] } }))
+  })
 })
 
 describe('$nin', function () {
+  it('should work with empty list', function () {
+    assert.equal('TRUE', convert('data', { type: { $nin: [] } }))
+  })
+  it('should work with single string', function () {
+    assert.equal('data->>\'type\' NOT IN (\'food\')', convert('data', { type: { $nin: [ 'food' ] } }))
+  })
   it('should work with strings', function () {
     assert.equal('data->>\'type\' NOT IN (\'food\', \'snacks\')', convert('data', { type: { $nin: [ 'food', 'snacks' ] } }))
   })
   it('should work with numbers', function () {
     assert.equal('data->\'count\' NOT IN (\'1\'::jsonb, \'5\'::jsonb)', convert('data', { count: { $nin: [ 1, 5 ] } }))
+  })
+  it('should work with just null value', function () {
+    assert.equal('data->\'count\' IS NOT NULL', convert('data', { count: { $nin: [null] } }))
+  })
+  it('should work with special values', function () {
+    assert.equal('(data->\'count\' NOT IN (\'\') AND data->\'count\' IS NOT NULL)', convert('data', { count: { $nin: [null, undefined, ''] } }))
   })
 })
 
