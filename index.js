@@ -246,6 +246,9 @@ var convert = function (path, query, arrayPaths, forceExact, options) {
     const text = util.pathToText(path, false)
     return '(' + text + ' IS NULL OR ' + text + ' = \'null\'::jsonb)'
   }
+  if (typeof query === 'undefined') {
+    return 'TRUE'
+  }
   if (query instanceof RegExp) {
     var op = query.ignoreCase ? '~*' : '~'
     return util.pathToText(path, true) + ' ' + op + ' \'' + util.stringEscape(query.source) + '\''

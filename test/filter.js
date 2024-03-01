@@ -255,6 +255,12 @@ describe('special cases', function () {
   it('should return true when passed no parameters', function() {
     assert.equal('TRUE', convert('data', {}))
   })
+  it('should return true when passed only undefined parameters', function() {
+    assert.equal('TRUE', convert('data', { a: undefined }))
+  })
+  it('should return true when passed some undefined parameters', function() {
+    assert.equal('(data @> \'{ "b": 1 }\' and TRUE)', convert('data', { b: 1, a: undefined }))
+  })
 })
 
 describe('options.disableContainmentQuery', function () {
