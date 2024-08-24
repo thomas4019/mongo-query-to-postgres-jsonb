@@ -18,4 +18,8 @@ describe('sort: ', function() {
   it('combined', function () {
     assert.equal(convertSort('data', { field: -1, b: 1 }), 'data->\'field\' DESC NULLS LAST, data->\'b\' ASC NULLS FIRST')
   })
+
+  it('ascending, force numeric', function () {
+    assert.equal(convertSort('data', { field: 1 }, true), 'cast(data->>\'field\' as double precision) ASC NULLS FIRST')
+  })
 })
