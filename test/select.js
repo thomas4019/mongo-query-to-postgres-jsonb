@@ -66,5 +66,17 @@ describe('select: ', function() {
           'jsonb_array_elements(v->\'subarr\') as v) AS obj)) as r FROM jsonb_array_elements(data->\'arr\') ' +
           'as v) AS obj), \'_id\', data->\'_id\') as data')
     })
+
+    it('should properly escape special characters in field names for array projections', function () {
+      assert.equal(convertSelect('data', { 'stores.owner\'s_name': 1 }, ['stores']),
+        'jsonb_build_object(\'stores\', (SELECT jsonb_agg(r) FROM (SELECT jsonb_build_object(' +
+          '\'owner\'\'s_name\', v->\'owner\'\'s_name\') as r FROM jsonb_array_elements(data->\'stores\') as v)' +
+          ' AS obj), \'_id\', data->\'_id\') as data')
+    })
+
+    it('should handle array field names with special characters', function () {
+      assert.equal(convertSelect('data', { 'user\'s_stores': 1 }, ['user\'s_stores']),
+        'jsonb_build_object(\'user\'\'s_stores\', data->\'user\'\'s_stores\', \'_id\', data->\'_id\') as data')
+    })
   })
 })
