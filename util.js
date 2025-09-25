@@ -20,18 +20,14 @@ exports.quote2 = function(data) {
 
 // Universal PostgreSQL escaping function that handles any data type
 exports.postgresEscape = function(data) {
-  if (typeof data === 'string') {
-    // For strings, use JSON.stringify to handle backslashes, newlines, unicode, etc.
-    const jsonEscaped = JSON.stringify(data);
-    // Remove the surrounding quotes that JSON.stringify adds
-    const withoutQuotes = jsonEscaped.slice(1, -1);
-    // Then escape single quotes for PostgreSQL
-    return withoutQuotes.replace(/'/g, "''");
-  } else {
-    // For non-strings (objects, arrays, numbers, etc.), JSON.stringify and escape single quotes
-    const jsonString = JSON.stringify(data);
-    return jsonString.replace(/'/g, "''");
-  }
+  // Use JSON.stringify to handle all special characters (backslashes, newlines, unicode, etc.)
+  const jsonString = JSON.stringify(data);
+  
+  // For strings, remove the surrounding quotes that JSON.stringify adds
+  const processedString = typeof data === 'string' ? jsonString.slice(1, -1) : jsonString;
+  
+  // Escape single quotes for PostgreSQL
+  return processedString.replace(/'/g, "''");
 }
 
 
