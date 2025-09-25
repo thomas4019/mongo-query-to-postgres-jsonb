@@ -8,22 +8,35 @@ exports.countUpdateSpecialKeys = function(doc) {
 
 exports.quote = function(data) {
   if (typeof data == 'string')
-    return '\'' + exports.stringEscape(data) + '\''
-  return '\''+JSON.stringify(data)+'\'::jsonb'
+    return '\'' + exports.postgresEscape(data) + '\''
+  return '\'' + exports.postgresEscape(data) + '\'::jsonb'
 }
 
 exports.quote2 = function(data) {
   if (typeof data == 'string')
-    return '\'"' + exports.stringEscape(data) + '"\''
-  return '\''+JSON.stringify(data)+'\'::jsonb'
+    return '\'"' + exports.postgresEscape(data) + '"\''
+  return '\'' + exports.postgresEscape(data) + '\'::jsonb'
 }
 
-exports.stringEscape = function(str) {
-  return str.replace(/'/g, '\'\'')
+// Universal PostgreSQL escaping function that handles any data type
+exports.postgresEscape = function(data) {
+  if (typeof data === 'string') {
+    // For strings, use JSON.stringify to handle backslashes, newlines, unicode, etc.
+    const jsonEscaped = JSON.stringify(data);
+    // Remove the surrounding quotes that JSON.stringify adds
+    const withoutQuotes = jsonEscaped.slice(1, -1);
+    // Then escape single quotes for PostgreSQL
+    return withoutQuotes.replace(/'/g, "''");
+  } else {
+    // For non-strings (objects, arrays, numbers, etc.), JSON.stringify and escape single quotes
+    const jsonString = JSON.stringify(data);
+    return jsonString.replace(/'/g, "''");
+  }
 }
+
 
 exports.pathToText = function(path, isString) {
-  var text = exports.stringEscape(path[0])
+  var text = exports.postgresEscape(path[0])
   if (isString && path.length === 1) {
     return text + ' #>>\'{}\''
   }
@@ -32,7 +45,7 @@ exports.pathToText = function(path, isString) {
     if (/^\d+$/.test(path[i]))
       text += path[i] //don't wrap numbers in  quotes
     else
-      text += '\'' + exports.stringEscape(path[i]) + '\''
+      text += '\'' + exports.postgresEscape(path[i]) + '\''
   }
   return text
 }
@@ -47,13 +60,18 @@ exports.pathToObject = function(path) {
 exports.pathToObjectHelper = function(path) {
   if (path.length === 1) {
     if (typeof path[0] == 'string') {
-      return `"${path[0]}"`
+      // For strings, wrap in quotes for JSON
+      const escaped = exports.postgresEscape(path[0])
+      return `"${escaped}"`
     } else {
-      return path[0]
+      // For non-strings (arrays, objects, numbers, etc.), use direct JSON representation
+      return exports.postgresEscape(path[0])
     }
   }
   const [head, ...tail] = path
-  return `{ "${head}": ${exports.pathToObjectHelper(tail)} }`
+  // Use enhanced escaping for field names too
+  const escapedHead = exports.postgresEscape(head)
+  return `{ "${escapedHead}": ${exports.pathToObjectHelper(tail)} }`
 }
 
 exports.convertDotNotation = function(path, pathDotNotation) {
@@ -61,7 +79,14 @@ exports.convertDotNotation = function(path, pathDotNotation) {
 }
 
 exports.toPostgresPath = function(path) {
-  return '\'{' + path.join(',') + '}\''
+  // Use enhanced escaping for path components
+  const escapedPath = path.map(component => {
+    if (typeof component === 'string') {
+      return exports.postgresEscape(component)
+    }
+    return component
+  })
+  return '\'{' + escapedPath.join(',') + '}\''
 }
 
 exports.toNumeric = function(path) {

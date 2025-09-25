@@ -26,6 +26,24 @@ describe('update: ', function() {
     it('$set fails for _id', function() {
       assert.throws(() => convertUpdate('data', { $set: { _id: 'b' } }), 'Mod on _id not allowed')
     })
+    it('$set with single quotes in field name', function() {
+      assert.equal(convertUpdate('data', { $set: { "user's_field": 'value' } }), 'jsonb_set(data,\'{user\'\'s_field}\',\'"value"\')')
+    })
+    it('$set with single quotes in value', function() {
+      assert.equal(convertUpdate('data', { $set: { name: "Jackson's Mall" } }), 'jsonb_set(data,\'{name}\',\'"Jackson\'\'s Mall"\')')
+    })
+    it('$set with single quotes in nested path', function() {
+      assert.equal(convertUpdate('data', { $set: { "store.owner's_name": "Jackson's Mall" } }), 'jsonb_set(jsonb_set(data,\'{store}\',COALESCE(data->\'store\', \'{}\'::jsonb)),\'{store,owner\'\'s_name}\',\'"Jackson\'\'s Mall"\')')
+    })
+    it('$set with backslashes', function() {
+      assert.equal(convertUpdate('data', { $set: { path: "C:\\Users\\test" } }), 'jsonb_set(data,\'{path}\',\'"C:\\\\Users\\\\test"\')')
+    })
+    it('$set with newlines and control characters', function() {
+      assert.equal(convertUpdate('data', { $set: { message: "Line1\nLine2\tTab" } }), 'jsonb_set(data,\'{message}\',\'"Line1\\nLine2\\tTab"\')')
+    })
+    it('$set with special characters in field names', function() {
+      assert.equal(convertUpdate('data', { $set: { "field\\with\\backslashes": "value" } }), 'jsonb_set(data,\'{field\\\\with\\\\backslashes}\',\'"value"\')')
+    })
 
     it('$unset', function() {
       assert.equal(convertUpdate('data', { $unset: { field: 'value' } }), 'data #- \'{field}\'')

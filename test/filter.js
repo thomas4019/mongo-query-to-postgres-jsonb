@@ -14,11 +14,41 @@ describe('string equality', function () {
   it('should support nesting using the dot operator', function() {
     assert.equal('data @> \'{ "test": { "cat": { "name": "oscar" } } }\'', convert('data', {'test.cat.name': 'oscar'}))
   })
+  it('should properly escape single quotes in string values', function() {
+    assert.equal('data @> \'{ "name": "Jackson\'\'s Mall" }\'', convert('data', {name: "Jackson's Mall"}))
+  })
+  it('should properly escape single quotes in nested paths', function() {
+    assert.equal('data @> \'{ "store": { "name": "Jackson\'\'s Mall" } }\'', convert('data', {'store.name': "Jackson's Mall"}))
+  })
+  it('should properly escape single quotes in field names', function() {
+    assert.equal('data @> \'{ "user\'\'s_name": "thomas" }\'', convert('data', {"user's_name": "thomas"}))
+  })
+  it('should handle multiple single quotes', function() {
+    assert.equal('data @> \'{ "text": "It\'\'s a \'\'test\'\'" }\'', convert('data', {text: "It's a 'test'"}))
+  })
+  it('should handle both single and double quotes', function() {
+    assert.equal('data @> \'{ "message": "He said \\"It\'\'s working\\"" }\'', convert('data', {message: 'He said "It\'s working"'}))
+  })
+  it('should properly escape backslashes', function() {
+    assert.equal('data @> \'{ "path": "C:\\\\Users\\\\test" }\'', convert('data', {path: "C:\\Users\\test"}))
+  })
+  it('should properly escape newlines and control characters', function() {
+    assert.equal('data @> \'{ "message": "Line 1\\nLine 2\\tTabbed\\rReturn" }\'', convert('data', {message: "Line 1\nLine 2\tTabbed\rReturn"}))
+  })
+  it('should handle mixed special characters', function() {
+    assert.equal('data @> \'{ "text": "Path: C:\\\\test\\nName: Jackson\'\'s \\"Mall\\"" }\'', convert('data', {text: "Path: C:\\test\nName: Jackson's \"Mall\""}))
+  })
+  it('should handle special characters in field names', function() {
+    assert.equal('data @> \'{ "user\'\'s\\\\path": "value\\nwith\\nnewlines" }\'', convert('data', {"user's\\path": "value\nwith\nnewlines"}))
+  })
+  it('should handle special characters in nested paths', function() {
+    assert.equal('data @> \'{ "store": { "owner\'\'s\\\\name": "Jackson\'\'s\\nMall" } }\'', convert('data', {"store.owner's\\name": "Jackson's\nMall"}))
+  })
 })
 
 describe('array equality', function () {
   it('should use =', function () {
-    assert.equal('data @> \'{ "roles": Admin }\'', convert('data', {'roles': ['Admin']}))
+    assert.equal('data @> \'{ "roles": ["Admin"] }\'', convert('data', {'roles': ['Admin']}))
   })
   it('should matching numeric indexes', function() {
     assert.equal('data->\'roles\'->>0=\'Admin\'', convert('data', {'roles.0': 'Admin'}))

@@ -80,7 +80,7 @@ function convertOp(input, op, data, fieldName, upsert) {
 var convert = function (fieldName, update, upsert) {
   var specialCount = util.countUpdateSpecialKeys(update)
   if (specialCount === 0) {
-    return '\'' + JSON.stringify(update) + '\'::jsonb'
+    return '\'' + util.postgresEscape(update) + '\'::jsonb'
   }
   var output = upsert ? '\'{}\'::jsonb' : fieldName
   let keys = Object.keys(update)

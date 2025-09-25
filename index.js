@@ -144,7 +144,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
     }
     case '$text': {
       const newOp = '~' + (!value['$caseSensitive'] ? '*' : '')
-      return util.pathToText(path, true) + ' ' + newOp + ' \'' + util.stringEscape(value['$search']) + '\''
+      return util.pathToText(path, true) + ' ' + newOp + ' \'' + util.postgresEscape(value['$search']) + '\''
     }
     case '$regex':  {
       var regexOp = '~'
@@ -159,7 +159,7 @@ function convertOp(path, op, value, parent, arrayPaths) {
       if (value instanceof RegExp) {
         value = value.source
       }
-      return util.pathToText(path, true) + ' ' + regexOp + ' \'' + op2 + util.stringEscape(value) + '\''
+      return util.pathToText(path, true) + ' ' + regexOp + ' \'' + op2 + util.postgresEscape(value) + '\''
     }
     case '$gt':
     case '$gte':
@@ -237,7 +237,7 @@ var convert = function (path, query, arrayPaths, forceExact=false) {
   }
   if (query instanceof RegExp) {
     var op = query.ignoreCase ? '~*' : '~'
-    return util.pathToText(path, true) + ' ' + op + ' \'' + util.stringEscape(query.source) + '\''
+    return util.pathToText(path, true) + ' ' + op + ' \'' + util.postgresEscape(query.source) + '\''
   }
   if (typeof query === 'object') {
     // Check for an empty object
