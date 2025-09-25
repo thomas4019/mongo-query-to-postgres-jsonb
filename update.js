@@ -2,7 +2,7 @@ const util = require('./util.js')
 const convertWhere = require('./index.js')
 
 function convertOp(input, op, data, fieldName, upsert) {
-  const pathText = Object.keys(data)[0]
+  const pathText = util.getPathSortedArray(Object.keys(data))[0]
   const value = data[pathText]
   delete data[pathText]
   if (Object.keys(data).length > 0) {
@@ -18,9 +18,10 @@ function convertOp(input, op, data, fieldName, upsert) {
       // Create the necessary top level keys since jsonb_set will not create them automatically.
       if (path.length > 1) {
         for (let i = 0; i < path.length - 1; i++) {
-          const parentPath = util.toPostgresPath([path[i]])
+          const slice = path.slice(0, i + 1)
+          const parentPath = util.toPostgresPath(slice)
           if (!input.includes(parentPath)) {
-            const parentValue = upsert ? '\'{}\'::jsonb' : `COALESCE(${util.pathToText([fieldName].concat(path.slice(0, i + 1)))}, '{}'::jsonb)`
+            const parentValue = upsert ? '\'{}\'::jsonb' : `COALESCE(${util.pathToText([fieldName].concat(slice))}, '{}'::jsonb)`
             input = 'jsonb_set(' + input + ',' + parentPath + ',' + parentValue + ')'
           }
         }

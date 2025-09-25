@@ -13,15 +13,28 @@ describe('update: ', function() {
     })
   })
 
+  describe('escaping', function () {
+    it('simple quotes', function() {
+      assert.equal(convertUpdate('data', { $set: { message:'I\'m a string' } }), 'jsonb_set(data,\'{message}\',\'"I\'\'m a string"\')')
+    })
+
+    it('nested quotes', function() {
+      assert.equal(convertUpdate('data', { $set: { prop_1: { message:'I\'m a string' } } }), 'jsonb_set(data,\'{prop_1}\',\'{"message":"I\'\'m a string"}\'::jsonb)')
+    })
+  })
+
   describe('operators', function () {
     it('$set', function() {
       assert.equal(convertUpdate('data', { $set: { field: 'value' } }), 'jsonb_set(data,\'{field}\',\'"value"\')')
     })
     it('$set multiple', function() {
-      assert.equal(convertUpdate('data', { $set: { field: 'value', second: 2 } }), 'jsonb_set(jsonb_set(data,\'{second}\',\'2\'::jsonb),\'{field}\',\'"value"\')')
+      assert.equal(convertUpdate('data', { $set: { field: 'value', second: 2 } }), 'jsonb_set(jsonb_set(data,\'{field}\',\'"value"\'),\'{second}\',\'2\'::jsonb)')
     })
     it('$set deep', function() {
       assert.equal(convertUpdate('data', { $set: { 'a.b': 2 } }), 'jsonb_set(jsonb_set(data,\'{a}\',COALESCE(data->\'a\', \'{}\'::jsonb)),\'{a,b}\',\'2\'::jsonb)')
+    })
+    it('$set deep 2', function() {
+      assert.equal(convertUpdate('data', { $set: { 'a.b.c': 2 } }), 'jsonb_set(jsonb_set(jsonb_set(data,\'{a}\',COALESCE(data->\'a\', \'{}\'::jsonb)),\'{a,b}\',COALESCE(data->\'a\'->\'b\', \'{}\'::jsonb)),\'{a,b,c}\',\'2\'::jsonb)')
     })
     it('$set fails for _id', function() {
       assert.throws(() => convertUpdate('data', { $set: { _id: 'b' } }), 'Mod on _id not allowed')
@@ -52,7 +65,7 @@ describe('update: ', function() {
       assert.equal(convertUpdate('data', { $unset: { 'field.inner': 1 } }), 'data #- \'{field,inner}\'')
     })
     it('$unset multiple', function() {
-      assert.equal(convertUpdate('data', { $unset: { field: 1, second: 1 } }), 'data #- \'{second}\' #- \'{field}\'')
+      assert.equal(convertUpdate('data', { $unset: { field: 1, second: 1 } }), 'data #- \'{field}\' #- \'{second}\'')
     })
 
     it('$inc', function() {
@@ -90,6 +103,19 @@ describe('update: ', function() {
     })
     it('$set,$unset,$inc', function() {
       assert.equal(convertUpdate('data', { $set: { active: true }, $unset: { field: 'value' }, $inc: { purchases: 2 } }), 'jsonb_set(jsonb_set(data,\'{active}\',\'true\'::jsonb) #- \'{field}\',\'{purchases}\',to_jsonb(COALESCE(Cast(data->>\'purchases\' as numeric),0)+2))')
+    })
+  })
+
+  describe('array by index', function () {
+    it('$set', function() {
+      assert.equal(convertUpdate('data', { $set: {
+        'Items.0': { test: 0 },
+        'Items.2': { test: 2 },
+        'Items.1': { test: 1 },
+      }}),
+          'jsonb_set(jsonb_set(jsonb_set(jsonb_set(data,\'{Items}\',COALESCE(data->\'Items\', ' +
+          '\'{}\'::jsonb)),\'{Items,0}\',\'{"test":0}\'::jsonb),\'{Items,1}\',\'{"test":1}\'::jsonb)' +
+          ',\'{Items,2}\',\'{"test":2}\'::jsonb)')
     })
   })
 })
