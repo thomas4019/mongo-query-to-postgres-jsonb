@@ -62,6 +62,12 @@ describe('array equality', function () {
   it('support element matching', function() {
     assert.equal('data @> \'{ "roles": "Admin" }\'', convert('data', {'roles': {$elemMatch: 'Admin'}}))
   })
+  it('should properly escape special characters in array values', function() {
+    assert.equal('data @> \'{ "stores": ["Jackson\'\'s Mall","O\'\'Connor\'\'s Bar"] }\'', convert('data', {'stores': ["Jackson's Mall", "O'Connor's Bar"]}))
+  })
+  it('should handle arrays with mixed data types and special characters', function() {
+    assert.equal('data @> \'{ "data": ["text with \'\'quotes\'\'",123,true,null] }\'', convert('data', {'data': ["text with 'quotes'", 123, true, null]}))
+  })
 })
 
 describe('boolean equality', function () {
