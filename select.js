@@ -6,7 +6,7 @@ function convertRecur(fieldName, input, arrayFields, prefix, prefixStrip) {
   } else {
     var entries = []
     for (var key in input) {
-      entries.push('\'' + key + '\'')
+      entries.push('\'' + util.postgresEscape(key) + '\'')
       const nestedArrayField = arrayFields.includes(prefix + key) && typeof input[key] === 'object'
       if (!nestedArrayField) {
         entries.push(convertRecur(fieldName, input[key], arrayFields, prefix + key + '.' , prefixStrip))
