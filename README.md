@@ -78,6 +78,22 @@ Cast strings to number when sorting.
 | Update     | { $inc: { purchases: 2 } }    |  jsonb_set(data,'{purchases}',to_jsonb(Cast(data->>'purchases' as numeric)+2))  |
 | Sort       | { age: -1,   'first.name': 1} |  data->'age' DESC, data->'first'->'name' ASC                                    |
 
+## Testing
+
+Run unit tests:
+
+```sh
+npm test
+```
+
+Run Postgres e2e tests (requires Docker):
+
+```sh
+npm run test:postgres:docker
+```
+
+This command starts a temporary Postgres container, runs `test/postgres.e2e.js`, and stops the container.
+
 ## Advanced Select: Match a Field Without Specifying Array Index
 
 * [Mongo Docs](https://docs.mongodb.org/manual/tutorial/query-documents/#match-a-field-without-specifying-array-index)

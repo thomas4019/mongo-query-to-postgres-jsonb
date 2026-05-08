@@ -235,10 +235,19 @@ describe('$type', function () {
 
 describe('$exists', function () {
   it('work at top level', function() {
-    assert.equal('data ? \'name\'', convert('data', { name: { $exists: true } }))
+    assert.equal('COALESCE(data ? \'name\', false)', convert('data', { name: { $exists: true } }))
+  })
+  it('work at top level for false', function() {
+    assert.equal('NOT COALESCE(data ? \'name\', false)', convert('data', { name: { $exists: false } }))
   })
   it('with dot paths', function() {
-    assert.equal('data->\'name\' ? \'first\'', convert('data', { 'name.first': { $exists: true } }))
+    assert.equal('COALESCE(data->\'name\' ? \'first\', false)', convert('data', { 'name.first': { $exists: true } }))
+  })
+  it('with dot paths for false', function() {
+    assert.equal('NOT COALESCE(data->\'name\' ? \'first\', false)', convert('data', { 'name.first': { $exists: false } }))
+  })
+  it('with two-level deep dot paths for false', function() {
+    assert.equal('NOT COALESCE(data->\'name\'->\'first\' ? \'middle\', false)', convert('data', { 'name.first.middle': { $exists: false } }))
   })
 })
 

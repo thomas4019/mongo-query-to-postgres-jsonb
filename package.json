@@ -7,10 +7,14 @@
     "test": "test"
   },
   "devDependencies": {
-    "browserify": "^17.0.0",
     "chai": "^4.2.0",
     "eslint": "^7.1.0",
-    "mocha": "^10.2.0"
+    "mocha": "^11.7.5",
+    "pg": "^8.20.0"
+  },
+  "overrides": {
+    "diff": "^8.0.3",
+    "serialize-javascript": "^7.0.5"
   },
   "repository": {
     "type": "git",
@@ -18,9 +22,11 @@
   },
   "scripts": {
     "test": "mocha",
+    "test:postgres": "RUN_POSTGRES_E2E=true mocha test/postgres.e2e.js",
+    "test:postgres:docker": "sh scripts/run_postgres_tests.sh",
     "lint": "eslint .",
     "fixlint": "eslint . --fix",
-    "browserbuild": "browserify main.js -o dist/m-to-psql.js"
+    "browserbuild": "npx browserify@17 main.js -o dist/m-to-psql.js"
   },
   "keywords": [
     "mongogdb",

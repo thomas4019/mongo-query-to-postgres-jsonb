@@ -200,7 +200,8 @@ function convertOp(path, op, value, parent, arrayPaths, options) {
       if (path.length > 1) {
         const key = path.pop()
         const text = util.pathToText(path, false)
-        return (value ? '' : ' NOT ') + text + ' ? ' + util.quote(key)
+        const test = `COALESCE(${text} ? ${util.quote(key)}, false)`
+        return value ? test : `NOT ${test}`
       } else {
         const text = util.pathToText(path, false)
         return text + ' IS ' + (value ? 'NOT ' : '') + 'NULL'
